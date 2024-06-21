@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  before_after: ^3.0.0+1
   cupertino_icons: ^1.0.6
   file_picker: ^8.0.5
   fluentui_system_icons: ^1.1.244
@@ -35,6 +36,7 @@ dependencies:
     sdk: flutter
   flutter_hooks: ^0.20.5
   hooks_riverpod: ^2.5.1
+  layout: ^1.0.5
   path: ^1.9.0
   riverpod_annotation: ^2.3.5
 

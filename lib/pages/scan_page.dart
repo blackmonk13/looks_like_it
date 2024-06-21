@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:looks_like_it/providers/common.dart';
 
+import 'package:looks_like_it/providers/common.dart';
 import 'package:looks_like_it/components/similarities_view.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 

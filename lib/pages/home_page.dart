@@ -2,8 +2,10 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
 import 'package:looks_like_it/pages/scan_page.dart';
 import 'package:looks_like_it/providers/common.dart';
+import 'package:looks_like_it/utils/extensions.dart';
 
 class MyHomePage extends HookConsumerWidget {
   const MyHomePage({
@@ -17,9 +19,9 @@ class MyHomePage extends HookConsumerWidget {
     final textController = useTextEditingController(text: scanDirectory);
 
     return Scaffold(
+      backgroundColor: context.colorScheme.surfaceContainer,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text("Home"),
+        backgroundColor: context.colorScheme.surfaceContainer,
         actions: [
           IconButton(
             tooltip: executablePath,
@@ -43,8 +45,8 @@ class MyHomePage extends HookConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             // TextFormField(),
-            SizedBox(
-              width: 500,
+            FractionallySizedBox(
+              widthFactor: .8,
               child: TextField(
                 controller: textController,
               ),

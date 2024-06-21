@@ -7,8 +7,8 @@ import 'package:looks_like_it/pages/scan_page.dart';
 import 'package:looks_like_it/providers/common.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 
-class MyHomePage extends HookConsumerWidget {
-  const MyHomePage({
+class HomePage extends HookConsumerWidget {
+  const HomePage({
     super.key,
   });
 

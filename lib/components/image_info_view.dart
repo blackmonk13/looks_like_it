@@ -1,5 +1,6 @@
+
 import 'package:flutter/material.dart';
-import 'package:looks_like_it/models/similar_image/similar_image.dart';
+import 'package:looks_like_it/models/similar_image.dart';
 import 'package:looks_like_it/utils/functions.dart';
 
 class ImageInfoView extends StatelessWidget {
@@ -13,25 +14,27 @@ class ImageInfoView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = image.imagePath;
-    final imageSize = image.imageInfo?.size;
 
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainer,
       child: ListView(
         children: [
+          // ImageInfoTile(
+          //   label: "Id",
+          //   info: Text(image.id.toString()),
+          // ),
           ImageInfoTile(
-            label: "Dimensions",
+            label: "Size Info",
             info: DimensionsView(
-              dimensions: image.imageInfo?.dimensions,
+              image: image,
             ),
           ),
-          ImageInfoTile(
-            label :"Size",
-            info: Text(formatFileSize(imageSize)),
+          const Divider(
+            height: 2,
           ),
           ImageInfoTile(
-            label:"Path",
-            info: Text(imagePath ?? ""),
+            label: "File Path",
+            info: Text(imagePath),
           ),
         ],
       ),
@@ -65,53 +68,40 @@ class ImageInfoTile extends StatelessWidget {
 class DimensionsView extends StatelessWidget {
   const DimensionsView({
     super.key,
-    required this.dimensions,
+    required this.image,
   });
 
-  final ({int height, int width})? dimensions;
+  final SimilarImage? image;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text.rich(
+    return Text.rich(
+      TextSpan(
+        children: [
           TextSpan(
             children: [
               TextSpan(
-                children: [
-                  TextSpan(
-                    text: "Width: ",
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  TextSpan(
-                    text: dimensions?.width.toString(),
-                  )
-                ],
+                text: image?.width.toString(),
               ),
+              TextSpan(
+                text: " x ",
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+              TextSpan(
+                text: image?.height.toString(),
+              ),
+              const TextSpan(text: "\t\t")
             ],
           ),
-        ),
-        const VerticalDivider(),
-        Text.rich(
           TextSpan(
             children: [
               TextSpan(
-                children: [
-                  TextSpan(
-                    text: "Height: ",
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  TextSpan(
-                    text: dimensions?.height.toString(),
-                  )
-                ],
-              ),
+                text: formatFileSize(image?.size),
+              )
             ],
           ),
-        ),
-        const Spacer()
-      ],
+        ],
+      ),
     );
   }
 }

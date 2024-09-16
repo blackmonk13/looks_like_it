@@ -1,6 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:isar/isar.dart';
+import 'package:looks_like_it/models/similar_image.dart';
+import 'package:path_provider/path_provider.dart';
+
+Future<Isar> getStorage() async {
+  final dir = await getApplicationDocumentsDirectory();
+  final isar = await Isar.open(
+    [SimilarImageSchema],
+    directory: dir.path,
+  );
+  return isar;
+}
+
 String formatFileSize(String? fileSize) {
   if (fileSize == null || fileSize.isEmpty) return "Unknown size";
 
@@ -20,7 +33,6 @@ String formatFileSize(String? fileSize) {
 
   return "${sizeInBytes.toStringAsFixed(2)} ${units[unitIndex]}";
 }
-
 
 Future<String> runStreamed(
   String childProcessName,

@@ -154,73 +154,70 @@ class _FileImageProviderElement extends AutoDisposeProviderElement<FileImage>
   String get imagePath => (origin as FileImageProvider).imagePath;
 }
 
-String _$similaritiesExecutableHash() =>
-    r'01d30bebbae062ccb51da17578a80f0d7681f7ee';
+String _$selectedImageControllerHash() =>
+    r'cf3f3a296bd8c8bf46890371f82d0996a204899f';
 
-/// See also [SimilaritiesExecutable].
-@ProviderFor(SimilaritiesExecutable)
-final similaritiesExecutableProvider =
-    NotifierProvider<SimilaritiesExecutable, String?>.internal(
-  SimilaritiesExecutable.new,
-  name: r'similaritiesExecutableProvider',
+/// See also [SelectedImageController].
+@ProviderFor(SelectedImageController)
+final selectedImageControllerProvider =
+    AutoDisposeNotifierProvider<SelectedImageController, int>.internal(
+  SelectedImageController.new,
+  name: r'selectedImageControllerProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$similaritiesExecutableHash,
+      : _$selectedImageControllerHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$SimilaritiesExecutable = Notifier<String?>;
-String _$directoryPickerHash() => r'214eb2c7dbeb4b7744eca5a5c17cbda52c146312';
+typedef _$SelectedImageController = AutoDisposeNotifier<int>;
+String _$selectedIdHash() => r'848c8e191426b9525ecf97147fccb676e3e48497';
 
-/// See also [DirectoryPicker].
-@ProviderFor(DirectoryPicker)
-final directoryPickerProvider =
-    NotifierProvider<DirectoryPicker, String?>.internal(
-  DirectoryPicker.new,
-  name: r'directoryPickerProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$directoryPickerHash,
+/// See also [SelectedId].
+@ProviderFor(SelectedId)
+final selectedIdProvider =
+    AutoDisposeNotifierProvider<SelectedId, int>.internal(
+  SelectedId.new,
+  name: r'selectedIdProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$selectedIdHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$DirectoryPicker = Notifier<String?>;
-String _$similaritiesControllerHash() =>
-    r'b59f544c9a44fa81bc9f8b295051aa538430433b';
+typedef _$SelectedId = AutoDisposeNotifier<int>;
+String _$selectedSimilarityHash() =>
+    r'9377235eb42f8642159e656711ce34dd3c5acede';
 
-/// See also [SimilaritiesController].
-@ProviderFor(SimilaritiesController)
-final similaritiesControllerProvider = AutoDisposeAsyncNotifierProvider<
-    SimilaritiesController, Map<SimilarImage, List<SimilarImage>>?>.internal(
-  SimilaritiesController.new,
-  name: r'similaritiesControllerProvider',
+/// See also [SelectedSimilarity].
+@ProviderFor(SelectedSimilarity)
+final selectedSimilarityProvider =
+    AutoDisposeNotifierProvider<SelectedSimilarity, int>.internal(
+  SelectedSimilarity.new,
+  name: r'selectedSimilarityProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$similaritiesControllerHash,
+      : _$selectedSimilarityHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$SimilaritiesController
-    = AutoDisposeAsyncNotifier<Map<SimilarImage, List<SimilarImage>>?>;
-String _$selectionGroupHash() => r'10ee20339765a394c5ad8b14cc38f40c988aca16';
+typedef _$SelectedSimilarity = AutoDisposeNotifier<int>;
+String _$selectedImagesHash() => r'24f01833f9783f570f1990399ccb707eb08fe4a5';
 
-/// See also [SelectionGroup].
-@ProviderFor(SelectionGroup)
-final selectionGroupProvider = AutoDisposeNotifierProvider<SelectionGroup,
-    ({int selectedImage, int selectedSimilarity})>.internal(
-  SelectionGroup.new,
-  name: r'selectionGroupProvider',
+/// See also [SelectedImages].
+@ProviderFor(SelectedImages)
+final selectedImagesProvider =
+    AutoDisposeNotifierProvider<SelectedImages, List<SimilarImage>>.internal(
+  SelectedImages.new,
+  name: r'selectedImagesProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$selectionGroupHash,
+      : _$selectedImagesHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef _$SelectionGroup
-    = AutoDisposeNotifier<({int selectedImage, int selectedSimilarity})>;
+typedef _$SelectedImages = AutoDisposeNotifier<List<SimilarImage>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

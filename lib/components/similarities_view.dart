@@ -1,65 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:layout/layout.dart';
 import 'package:looks_like_it/components/groups_view.dart';
-import 'package:looks_like_it/models/similar_image/similar_image.dart';
+import 'package:looks_like_it/components/image_similarities_view.dart';
+import 'package:looks_like_it/data/similarities_repository.dart';
 import 'package:looks_like_it/providers/common.dart';
 import 'package:looks_like_it/utils/extensions.dart';
-import 'package:path/path.dart' as p;
+
+import 'similarity_tile.dart';
 
 class SimilaritiesView extends HookConsumerWidget {
-  final Map<SimilarImage, List<SimilarImage>> data;
   const SimilaritiesView({
     super.key,
-    required this.data,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedGroup = ref.watch(selectionGroupProvider);
     return Row(
       children: [
-        Flexible(
-          child: Container(
-            color: context.colorScheme.surfaceContainer,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                vertical: 16.0,
-                horizontal: 16.0,
-              ),
-              itemCount: data.length,
-              separatorBuilder: (BuildContext context, int index) {
-                return const Divider(
-                  thickness: 0.4,
-                  height: 2.0,
-                );
-              },
-              itemBuilder: (BuildContext context, int index) {
-                final item = data.keys.elementAt(index);
-            
-                final similarities = data.values.elementAt(index);
-                final selected = selectedGroup.selectedImage == index;
-                return SimilarityTile(
-                  onTap: () {
-                    ref.read(selectionGroupProvider.notifier).selectImage(index);
-                  },
-                  selected: selected,
-                  image: item,
-                  similarities: similarities,
-                );
-              },
-            ),
-          ),
+        const Flexible(
+          flex: 2,
+          child: ImagesListView(),
+        ),
+        const VerticalDivider(
+          width: 2.0,
+        ),
+        const Flexible(
+          flex: 6,
+          child: GroupsView(),
         ),
         const VerticalDivider(
           width: 2.0,
         ),
         Flexible(
-          flex: 4,
-          child: GroupsView(
-            data: (
-              image: data.keys.elementAt(selectedGroup.selectedImage),
-              similarities: data.values.elementAt(selectedGroup.selectedImage),
-            ),
+          flex: context.layout.value(xs: 0, md: 1),
+          child: AdaptiveBuilder(
+            xs: (context) {
+              return const SizedBox.shrink();
+            },
+            md: (context) {
+              return const ImageSimilaritiesView();
+            },
           ),
         ),
       ],
@@ -67,68 +49,98 @@ class SimilaritiesView extends HookConsumerWidget {
   }
 }
 
-class SimilarityTile extends ConsumerWidget {
-  const SimilarityTile({
-    super.key,
-    required this.image,
-    required this.similarities,
-    this.selected = false,
-    this.onTap,
-  });
-
-  final SimilarImage image;
-  final List<SimilarImage> similarities;
-  final bool selected;
-  final GestureTapCallback? onTap;
-
+class ImagesListView extends HookConsumerWidget {
+  const ImagesListView({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final imagePath = image.imagePath;
-    const size = 50.0;
-    return ListTile(
-      contentPadding: const EdgeInsets.all(8.0),
-      shape: ContinuousRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      selected: selected,
-      selectedTileColor: context.colorScheme.surfaceContainerLow,
-      onTap: onTap,
-      leading: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5.0),
-          image: imagePath == null
-              ? null
-              : DecorationImage(
-                  fit: BoxFit.cover,
-                  image: ResizeImage(
-                    width: size.toInt(),
-                    height: size.toInt(),
-                    policy: ResizeImagePolicy.fit,
-                    ref.read(fileImageProvider(imagePath)),
-                  ),
-                ),
-        ),
-      ),
-      title: Text(
-        imagePath == null ? "Unknown" : p.basename(imagePath),
-        style: context.textTheme.labelMedium,
-        softWrap: true,
-        maxLines: 1,
-      ),
-      trailing: Card.outlined(
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 2.0,
-            horizontal: 8.0,
+    ref.watch(similarImagesWatcherProvider);
+    final asyncCount = ref.watch(imagesCountProvider);
+    final scrollController = useScrollController();
+    const padding = EdgeInsets.symmetric(
+      vertical: 16.0,
+      horizontal: 16.0,
+    );
+
+    return Container(
+      color: context.colorScheme.surfaceContainer,
+      child: Column(
+        children: [
+          const Row(
+            children: [
+              // IconButton(
+              //   onPressed: () => showAll.value = !showAll.value,
+              //   icon: const Icon(FluentIcons.list_24_filled),
+              // ),
+            ],
           ),
-          child: Text(
-            "${similarities.length}",
-            style: context.textTheme.labelSmall,
+          Expanded(
+            child: asyncCount.when(
+              data: (count) {
+                return ListView.builder(
+                  controller: scrollController,
+                  itemCount: count,
+                  padding: padding,
+                  itemBuilder: (BuildContext context, int index) {
+                    final page = index ~/ 30;
+                    final indexInPage = index % 30;
+
+                    final asyncSimilarities =
+                        ref.watch(pagedSimilaritiesProvider(page));
+
+                    final selectedId =
+                        ref.watch(selectedImageControllerProvider);
+
+                    return asyncSimilarities.when(
+                      data: (data) {
+                        // This condition only happens if a null itemCount is given
+                        if (indexInPage >= data.length) {
+                          return null;
+                        }
+                        final item = data.elementAt(indexInPage);
+
+                        final selected = selectedId == index;
+
+                        return SimilarityTile(
+                          key: Key(item.id.toString()),
+                          onTap: () {
+                            ref
+                                .read(selectedImageControllerProvider.notifier)
+                                .selectImage(index);
+                          },
+                          selected: selected,
+                          image: item,
+                        );
+                      },
+                      error: (error, stackTrace) {
+                        return SimilarityTile(
+                          error: (error: error, stackTrace: stackTrace),
+                        );
+                      },
+                      loading: () {
+                        return const SimilarityTile(
+                          loading: true,
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+              error: (error, stackTrace) {
+                return const SizedBox.shrink();
+              },
+              loading: () {
+                return ListView.builder(
+                  itemCount: 10,
+                  itemBuilder: (BuildContext context, int index) {
+                    return const SimilarityTile(
+                      loading: true,
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

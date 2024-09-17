@@ -22,7 +22,7 @@ final imageViewModeProvider =
 );
 
 typedef _$ImageViewMode = AutoDisposeNotifier<bool>;
-String _$themeControllerHash() => r'ed3704ac6ef32325f1fa9ef3a8e6f248fa0c7e21';
+String _$themeControllerHash() => r'ffd9c2285caba34adfb4ad6a3a677282b0a28858';
 
 /// See also [ThemeController].
 @ProviderFor(ThemeController)

@@ -23,6 +23,7 @@ environment:
 
 dependencies:
   before_after: ^3.0.0+1
+  crypto: ^3.0.5
   cupertino_icons: ^1.0.6
   file_picker: ^8.0.5
   fluentui_system_icons: ^1.1.244

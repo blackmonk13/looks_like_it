@@ -154,6 +154,34 @@ class _FileImageProviderElement extends AutoDisposeProviderElement<FileImage>
   String get imagePath => (origin as FileImageProvider).imagePath;
 }
 
+String _$isarHash() => r'ef48567d4702bb77c1fc2587f549a9b8823af5b5';
+
+/// See also [isar].
+@ProviderFor(isar)
+final isarProvider = FutureProvider<Isar>.internal(
+  isar,
+  name: r'isarProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$isarHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef IsarRef = FutureProviderRef<Isar>;
+String _$appStartupHash() => r'0335b56f9964927b4a863c853d31f6fb5f5c6220';
+
+/// See also [appStartup].
+@ProviderFor(appStartup)
+final appStartupProvider = FutureProvider<void>.internal(
+  appStartup,
+  name: r'appStartupProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$appStartupHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef AppStartupRef = FutureProviderRef<void>;
 String _$selectedImageControllerHash() =>
     r'cf3f3a296bd8c8bf46890371f82d0996a204899f';
 

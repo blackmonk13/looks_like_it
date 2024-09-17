@@ -1,13 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:isar/isar.dart';
 import 'package:looks_like_it/models/similar_image.dart';
+import 'package:looks_like_it/utils/prefs.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-
 part 'common.g.dart';
-
-
 
 @riverpod
 FileImage fileImage(FileImageRef ref, String imagePath) {
@@ -15,7 +15,6 @@ FileImage fileImage(FileImageRef ref, String imagePath) {
     File(imagePath),
   );
 }
-
 
 @riverpod
 class SelectedImageController extends _$SelectedImageController {
@@ -85,4 +84,28 @@ class SelectedImages extends _$SelectedImages {
       return !value.contains(element);
     }).toList();
   }
+}
+
+@Riverpod(keepAlive: true)
+FutureOr<Isar> isar(IsarRef ref) async {
+  final dir = await getApplicationSupportDirectory();
+  final isar = await Isar.open(
+    [SimilarImageSchema],
+    directory: dir.path,
+    inspector: false,
+  );
+  ref.onDispose(() => isar.close());
+  return isar;
+}
+
+@Riverpod(keepAlive: true)
+Future<void> appStartup(AppStartupRef ref) async {
+  ref.onDispose(() {
+    // ensure we invalidate all the providers we depend on
+    ref.invalidate(sharedPreferencesProvider);
+    ref.invalidate(isarProvider);
+  });
+  // all asynchronous app initialization code should belong here:
+  await ref.watch(sharedPreferencesProvider.future);
+  await ref.watch(isarProvider.future);
 }

@@ -22,7 +22,6 @@ Future<void> main() async {
     await windowManager.show();
     await windowManager.focus();
   });
-  prefs = await SharedPreferences.getInstance();
   isar = await getStorage();
 
   runApp(

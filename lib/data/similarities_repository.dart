@@ -16,10 +16,12 @@ part 'similarities_repository.g.dart';
 class SimilaritiesRepository {
   final String? executablePath;
   final String? folderPath;
+  final Isar isar;
 
   SimilaritiesRepository({
     required this.executablePath,
     required this.folderPath,
+    required this.isar,
   });
 
   Future<void> findSimilarities({
@@ -137,11 +139,13 @@ class SimilaritiesRepository {
 
 @riverpod
 SimilaritiesRepository similaritiesRepository(SimilaritiesRepositoryRef ref) {
+  final isar = ref.watch(isarProvider).requireValue;
   final folderPath = ref.watch(directoryPickerProvider);
   final executablePath = ref.watch(similaritiesExecutableProvider);
   return SimilaritiesRepository(
     executablePath: executablePath,
     folderPath: folderPath,
+    isar: isar,
   );
 }
 
@@ -163,6 +167,8 @@ FutureOr<List<SimilarImage>> pagedSimilarities(
   int page,
 ) async {
   ref.watch(similarImagesWatcherProvider);
+  final isar = ref.watch(isarProvider).requireValue;
+
   return isar.similarImages
       .filter()
       .similaritiesIsNotEmpty()
@@ -174,16 +180,19 @@ FutureOr<List<SimilarImage>> pagedSimilarities(
 
 @riverpod
 FutureOr<List<SimilarImage>> similarities(SimilaritiesRef ref) {
+  final isar = ref.watch(isarProvider).requireValue;
   return isar.similarImages.filter().similaritiesIsNotEmpty().findAll();
 }
 
 @riverpod
 FutureOr<int> imagesCount(ImagesCountRef ref) {
+  final isar = ref.watch(isarProvider).requireValue;
   return isar.similarImages.filter().similaritiesIsNotEmpty().count();
 }
 
 @riverpod
 FutureOr<SimilarImage?> selectedImage(SelectedImageRef ref) {
+  final isar = ref.watch(isarProvider).requireValue;
   final selectedId = ref.watch(selectedIdProvider);
   return isar.similarImages
       .filter()
@@ -200,6 +209,7 @@ class DeleteImage extends _$DeleteImage {
   }
 
   Future<void> delete() async {
+    final isar = ref.read(isarProvider).requireValue;
     final imageName = p.basename(image.imagePath);
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
@@ -218,5 +228,6 @@ class DeleteImage extends _$DeleteImage {
 
 @riverpod
 Stream<void> similarImagesWatcher(SimilarImagesWatcherRef ref) {
+  final isar = ref.watch(isarProvider).requireValue;
   return isar.similarImages.watchLazy(fireImmediately: true);
 }

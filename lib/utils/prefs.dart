@@ -5,8 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'prefs.g.dart';
 
-late Isar isar;
-
 const themeModePrefsKey = "themeMode";
 const executablePathPrefsKey = "managerpath";
 const recentPathsPrefsKey = "recentpaths";

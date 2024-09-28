@@ -23,7 +23,7 @@ final similaritiesExecutableProvider =
 );
 
 typedef _$SimilaritiesExecutable = Notifier<String?>;
-String _$directoryPickerHash() => r'b1b5c1c1e4d49c73c5f35e0a4f4725601ad02751';
+String _$directoryPickerHash() => r'8acd52bef9f849efac58a8f1ff8a0c518ec08b04';
 
 /// See also [DirectoryPicker].
 @ProviderFor(DirectoryPicker)

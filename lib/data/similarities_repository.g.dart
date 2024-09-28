@@ -7,7 +7,7 @@ part of 'similarities_repository.dart';
 // **************************************************************************
 
 String _$similaritiesRepositoryHash() =>
-    r'13ecd748b4cd244ce317c31dc01c50a12422773c';
+    r'2183f62505719c825ff5a9108a8843765a458334';
 
 /// See also [similaritiesRepository].
 @ProviderFor(similaritiesRepository)
@@ -190,7 +190,7 @@ class _FindSimilaritiesProviderElement
   bool get recursive => (origin as FindSimilaritiesProvider).recursive;
 }
 
-String _$pagedSimilaritiesHash() => r'fdad4336b02cf58967b4e20f68edc5444f5f0514';
+String _$pagedSimilaritiesHash() => r'dbb9ee87641ae79cbd1a99b4d8b75bfe43ed5309';
 
 /// See also [pagedSimilarities].
 @ProviderFor(pagedSimilarities)
@@ -320,7 +320,7 @@ class _PagedSimilaritiesProviderElement
   int get page => (origin as PagedSimilaritiesProvider).page;
 }
 
-String _$similaritiesHash() => r'e19d4bcc4ff56a590930b1a7c0d00ef6b58f4400';
+String _$similaritiesHash() => r'f7417dd909206eee4ffdc64e01c03b50159d8e29';
 
 /// See also [similarities].
 @ProviderFor(similarities)
@@ -335,7 +335,7 @@ final similaritiesProvider =
 );
 
 typedef SimilaritiesRef = AutoDisposeFutureProviderRef<List<SimilarImage>>;
-String _$imagesCountHash() => r'523d34d247432f1914e3bd987079fbb8912bf63a';
+String _$imagesCountHash() => r'2d3f9029261d0874e2d907dfe59a636e8380cbc9';
 
 /// See also [imagesCount].
 @ProviderFor(imagesCount)
@@ -349,7 +349,7 @@ final imagesCountProvider = AutoDisposeFutureProvider<int>.internal(
 );
 
 typedef ImagesCountRef = AutoDisposeFutureProviderRef<int>;
-String _$selectedImageHash() => r'05c20040324ff00e6f0506acc62eced2a562fd51';
+String _$selectedImageHash() => r'1ef2a4ad2c587e0e0fb9e3e1ecb53c59ceb071b5';
 
 /// See also [selectedImage].
 @ProviderFor(selectedImage)
@@ -365,7 +365,7 @@ final selectedImageProvider = AutoDisposeFutureProvider<SimilarImage?>.internal(
 
 typedef SelectedImageRef = AutoDisposeFutureProviderRef<SimilarImage?>;
 String _$similarImagesWatcherHash() =>
-    r'b68de28d8e5d701812b92d68e22eafc48478ffab';
+    r'53ce7e71771e2429522626ef4d1e015ce35dfedc';
 
 /// See also [similarImagesWatcher].
 @ProviderFor(similarImagesWatcher)
@@ -380,7 +380,7 @@ final similarImagesWatcherProvider = AutoDisposeStreamProvider<void>.internal(
 );
 
 typedef SimilarImagesWatcherRef = AutoDisposeStreamProviderRef<void>;
-String _$deleteImageHash() => r'031bde01bfa8412e23c69524f6e4c9a483e900f9';
+String _$deleteImageHash() => r'ce8ef2e74efffd4d3bf9afa1adf89b4b0b97a8c1';
 
 abstract class _$DeleteImage extends BuildlessAutoDisposeAsyncNotifier<bool> {
   late final SimilarImage image;

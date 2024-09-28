@@ -22,7 +22,6 @@ Future<void> main() async {
     await windowManager.show();
     await windowManager.focus();
   });
-  isar = await getStorage();
 
   runApp(
     // For widgets to be able to read providers, we need to wrap the entire

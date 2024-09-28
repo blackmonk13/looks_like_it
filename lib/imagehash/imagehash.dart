@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:crypto/crypto.dart' as crypto;
 import 'package:isar/isar.dart';
+import 'package:looks_like_it/imagehash/example/utils.dart';
 import 'package:path_provider/path_provider.dart';
 
 part 'imagehash.g.dart';
@@ -51,7 +52,9 @@ class PersistentLSH {
     final allHashes = await isar.imageHashs.where().findAll();
     for (final imageHash in allHashes) {
       memoryLSH.addVector(
-          imageHash.imagePath, Uint8List.fromList(imageHash.hash));
+        imageHash.imagePath,
+        Uint8List.fromList(imageHash.hash),
+      );
     }
   }
 }
@@ -102,41 +105,60 @@ class AverageHash {
 
   static Future<Uint8List> computeHash(String imagePath,
       {int hashSize = DEFAULT_HASH_SIZE}) async {
-    return await Isolate.run(() => _computeHashInternal(imagePath, hashSize));
+    final resultPort = ReceivePort();
+    await Isolate.spawn(
+        _isolateFunction, [imagePath, hashSize, resultPort.sendPort]);
+    final result = await resultPort.first;
+    if (result is Uint8List) {
+      return result;
+    } else {
+      throw Exception('Failed to compute hash: $result');
+    }
+  }
+
+  static void _isolateFunction(List<dynamic> args) {
+    final String imagePath = args[0];
+    final int hashSize = args[1];
+    final SendPort sendPort = args[2];
+
+    try {
+      final hash = _computeHashInternal(imagePath, hashSize);
+      sendPort.send(hash);
+    } catch (e) {
+      sendPort.send('Error: $e');
+    }
   }
 
   static Uint8List _computeHashInternal(String imagePath, int hashSize) {
-    File imageFile = File(imagePath);
-    img.Image? image = img.decodeImage(imageFile.readAsBytesSync());
+    final bytes = File(imagePath).readAsBytesSync();
+    final image = img.decodeImage(bytes);
 
     if (image == null) {
       throw Exception('Failed to load image: $imagePath');
     }
 
-    img.Image resizedImage = img.copyResize(
-      image,
-      width: hashSize,
-      height: hashSize,
-    );
+    final resizedImage = img.copyResize(image,
+        width: hashSize,
+        height: hashSize,
+        interpolation: img.Interpolation.average);
 
+    final int pixelCount = hashSize * hashSize;
+    final grayPixels = Uint8List(pixelCount);
     int totalSum = 0;
-    List<int> grayPixels = List.filled(hashSize * hashSize, 0);
 
-    for (int y = 0; y < hashSize; y++) {
-      for (int x = 0; x < hashSize; x++) {
-        final pixel = resizedImage.getPixel(x, y);
-        int gray = (pixel.r + pixel.g + pixel.b) ~/ 3;
-        grayPixels[y * hashSize + x] = gray;
-        totalSum += gray;
-      }
+    for (int i = 0; i < pixelCount; i++) {
+      final pixel = resizedImage.getPixel(i % hashSize, i ~/ hashSize);
+      final gray = (pixel.r + pixel.g + pixel.b) ~/ 3;
+      grayPixels[i] = gray;
+      totalSum += gray;
     }
 
-    int average = totalSum ~/ (hashSize * hashSize);
+    final average = totalSum ~/ pixelCount;
+    final hash = Uint8List((pixelCount + 7) ~/ 8);
 
-    Uint8List hash = Uint8List((hashSize * hashSize + 7) ~/ 8);
-    for (int i = 0; i < grayPixels.length; i++) {
+    for (int i = 0; i < pixelCount; i++) {
       if (grayPixels[i] > average) {
-        hash[i ~/ 8] |= (1 << (7 - (i % 8)));
+        hash[i >> 3] |= (1 << (7 - (i & 7)));
       }
     }
 
@@ -144,7 +166,7 @@ class AverageHash {
   }
 
   static String hashToHex(Uint8List hash) {
-    return hash.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    return hash.map((byt) => byt.toRadixString(16).padLeft(2, '0')).join();
   }
 
   static int hammingDistance(Uint8List hash1, Uint8List hash2) {
@@ -186,9 +208,10 @@ class AverageHash {
   }
 
   static Future<List<ImageSimilarity>> findSimilarImagesInFolder(
-      String folderPath,
-      {int hashSize = DEFAULT_HASH_SIZE,
-      double threshold = 90.0}) async {
+    String folderPath, {
+    int hashSize = DEFAULT_HASH_SIZE,
+    double threshold = 90.0,
+  }) async {
     Directory directory = Directory(folderPath);
     List<FileSystemEntity> files = directory
         .listSync(recursive: true, followLinks: false)
@@ -199,10 +222,13 @@ class AverageHash {
         await computeHashesForFiles(files.cast<File>(), hashSize: hashSize);
 
     List<ImageSimilarity> similarities = [];
-    for (var entry in hashes.entries) {
+    for (MapEntry<String, Uint8List> entry in hashes.entries) {
       List<ImageSimilarity> similar = await _findSimilarToImage(
-          entry.key, entry.value, hashes,
-          threshold: threshold);
+        entry.key,
+        entry.value,
+        hashes,
+        threshold: threshold,
+      );
       similarities.addAll(similar);
     }
 
@@ -352,8 +378,10 @@ class WorkerPool {
 
   Future<void> _initialize(int numWorkers) async {
     for (int i = 0; i < numWorkers; i++) {
-      final isolate =
-          await Isolate.spawn(_workerEntryPoint, _receivePort.sendPort);
+      final isolate = await Isolate.spawn(
+        _workerEntryPoint,
+        _receivePort.sendPort,
+      );
       _isolates.add(isolate);
     }
 
@@ -452,8 +480,10 @@ class EnhancedLSH {
   void addVector(String imagePath, Uint8List hashVector) {
     List<int> signature = _computeSignature(hashVector);
     for (int i = 0; i < numBands; i++) {
-      int bandHash =
-          _hashBand(signature.sublist(i * bandSize, (i + 1) * bandSize));
+      int bandHash = _hashBand(signature.sublist(
+        i * bandSize,
+        (i + 1) * bandSize,
+      ));
       hashTables.putIfAbsent(bandHash, () => {}).add(imagePath);
     }
   }
@@ -462,8 +492,10 @@ class EnhancedLSH {
     List<int> signature = _computeSignature(hashVector);
     Set<String> candidates = {};
     for (int i = 0; i < numBands; i++) {
-      int bandHash =
-          _hashBand(signature.sublist(i * bandSize, (i + 1) * bandSize));
+      int bandHash = _hashBand(signature.sublist(
+        i * bandSize,
+        (i + 1) * bandSize,
+      ));
       candidates.addAll(hashTables[bandHash] ?? {});
     }
     return candidates;
@@ -490,7 +522,10 @@ class StreamingImageProcessor {
   final AdaptiveBatchSizeCalculator batchSizeCalculator;
 
   StreamingImageProcessor(this.workerPool, this.lsh)
-      : batchSizeCalculator = AdaptiveBatchSizeCalculator();
+      : batchSizeCalculator = AdaptiveBatchSizeCalculator(
+          maxBatchSize: 300,
+          initialBatchSize: 10,
+        );
 
   Stream<ImageSimilarity> findSimilarImages(
     String folderPath, {
@@ -498,27 +533,38 @@ class StreamingImageProcessor {
     void Function(String message)? onError,
   }) async* {
     final directory = Directory(folderPath);
+    print("Scanning for similarities in ${directory.path}");
     final files = directory
-        .list()
+        .list(recursive: true)
         .where((entity) => entity is File && _isImageFile(entity.path));
-
+    int batchCount = 1;
     await for (final batch in files
         .asyncMap((file) => file as File)
         .chunked(batchSizeCalculator.currentBatchSize)) {
       final stopwatch = Stopwatch()..start();
-
+      print("Processing Batch #${batchCount}");
+      batchCount++;
       try {
         final batchHashes = await _computeHashesForBatch(batch);
 
         for (final newEntry in batchHashes.entries) {
           final candidates = await lsh.getCandidates(newEntry.value);
           for (final candidatePath in candidates) {
+            if (newEntry.key == candidatePath) {
+              continue;
+            }
             final candidateHash = await _getHashFromDatabase(candidatePath);
             if (candidateHash != null) {
-              final similarity =
-                  _calculateSimilarity(newEntry.value, candidateHash);
+              final similarity = _calculateSimilarity(
+                newEntry.value,
+                candidateHash,
+              );
               if (similarity >= threshold) {
-                yield ImageSimilarity(newEntry.key, candidatePath, similarity);
+                yield ImageSimilarity(
+                  newEntry.key,
+                  candidatePath,
+                  similarity,
+                );
               }
             }
           }
@@ -543,6 +589,8 @@ class StreamingImageProcessor {
       }
 
       stopwatch.stop();
+      print(
+          "Batch #${batchCount} processed in ${stopwatch.elapsedMilliseconds / 1000} seconds");
       batchSizeCalculator.adjustBatchSize(stopwatch.elapsedMilliseconds);
     }
   }
@@ -557,7 +605,9 @@ class StreamingImageProcessor {
   Future<Uint8List> _computeSingleHash(File file) async {
     try {
       return await workerPool.computeHash(
-          file.path, AverageHash.DEFAULT_HASH_SIZE);
+        file.path,
+        AverageHash.DEFAULT_HASH_SIZE,
+      );
     } catch (e) {
       print("Error computing hash for ${file.path}: $e");
       // Return a placeholder hash or rethrow based on your error handling strategy
@@ -585,28 +635,6 @@ class StreamingImageProcessor {
   }
 }
 
-extension StreamChunked<T> on Stream<T> {
-  Stream<List<T>> chunked(int size) {
-    return asyncMap((event) => [event]).bufferCount(size);
-  }
-}
-
-extension IterableBufferCount<T> on Stream<List<T>> {
-  Stream<List<T>> bufferCount(int count) async* {
-    List<T> buffer = [];
-    await for (final chunk in this) {
-      buffer.addAll(chunk);
-      while (buffer.length >= count) {
-        yield buffer.take(count).toList();
-        buffer = buffer.skip(count).toList();
-      }
-    }
-    if (buffer.isNotEmpty) {
-      yield buffer;
-    }
-  }
-}
-
 class ImageSimilarity {
   final String image1Path;
   final String image2Path;
@@ -630,77 +658,38 @@ class ImageSimilarity {
       'ImageSimilarity(image1: $image1Path, image2: $image2Path, similarity: ${similarity.toStringAsFixed(2)}%)';
 }
 
-void main() async {
-  String folderPath = 'C:\\Users\\spenc\\Downloads\\uzi268';
+class ImageMetadata {
+  final String path;
+  final int width;
+  final int height;
+  final int fileSize;
+  final int bitDepth;
+  // final double pixelDensity;
 
-  final workerPool = await WorkerPool.create(Platform.numberOfProcessors);
-  final memoryLSH = EnhancedLSH(vectorSize: AverageHash.DEFAULT_HASH_SIZE * 8);
-  final persistentLSH = PersistentLSH(memoryLSH);
-  await persistentLSH.initialize();
-  await persistentLSH.loadFromDatabase();
+  ImageMetadata({
+    required this.path,
+    required this.width,
+    required this.height,
+    required this.fileSize,
+    required this.bitDepth,
+    // required this.pixelDensity,
+  });
 
-  final processor = StreamingImageProcessor(workerPool, persistentLSH);
+  static Future<ImageMetadata> fromFile(String path) async {
+    final file = File(path);
+    final bytes = await file.readAsBytes();
+    final image = img.decodeImage(bytes);
 
-  try {
-    await for (final similarity in processor.findSimilarImages(
-      folderPath,
-      threshold: 90.0,
-      onError: (error) => print('Error: $error'),
-    )) {
-      print(similarity);
+    if (image == null) {
+      throw Exception('Unable to decode image');
     }
-  } finally {
-    await workerPool.close();
-    await persistentLSH.isar.close();
+
+    return ImageMetadata(
+      path: path,
+      width: image.width,
+      height: image.height,
+      fileSize: await file.length(),
+      bitDepth: image.bitsPerChannel,
+     );
   }
-
-  // final workerPool = await WorkerPool.create(Platform.numberOfProcessors);
-  // final lsh = EnhancedLSH(vectorSize: AverageHash.DEFAULT_HASH_SIZE * 8);
-  // final processor = StreamingImageProcessor(100, workerPool, lsh);
-
-  // try {
-  //   print("Looking for similar images");
-  //   await for (final similarity in processor.findSimilarImages(
-  //     folderPath,
-  //     threshold: 90.0,
-  //   )) {
-  //     print(similarity);
-  //   }
-  // } finally {
-  //   await workerPool.close();
-  // }
-
-  // Find similar images in the folder
-  // List<ImageSimilarity> similarities =
-  //     await AverageHash.findSimilarImagesInFolder(
-  //   folderPath,
-  //   threshold: 90.0,
-  // );
-
-  // print('Similar image pairs:');
-  // for (ImageSimilarity similarity in similarities) {
-  //   print(similarity);
-  // }
-
-  // Use LSH for faster similarity search in a large dataset
-  // LocalitySensitiveHashing lsh = LocalitySensitiveHashing();
-  // Map<String, Uint8List> allHashes =
-  //     await AverageHash.computeHashesForDirectory(folderPath);
-
-  // // Add all hashes to LSH
-  // for (var entry in allHashes.entries) {
-  //   lsh.addHash(entry.key, entry.value);
-  // }
-
-  // Find candidates for a specific image
-  // String targetImagePath = 'path/to/target/image.jpg';
-  // Uint8List targetHash = await AverageHash.computeHash(targetImagePath);
-  // Set<String> candidates = lsh.getCandidates(targetHash);
-
-  // print('Candidate similar images for $targetImagePath:');
-  // for (var candidatePath in candidates) {
-  //   double similarity =
-  //       AverageHash._calculateSimilarity(targetHash, allHashes[candidatePath]!);
-  //   print('$candidatePath: ${similarity.toStringAsFixed(2)}%');
-  // }
 }

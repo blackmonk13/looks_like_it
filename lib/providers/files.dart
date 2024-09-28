@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:looks_like_it/utils/prefs.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -66,6 +68,10 @@ class DirectoryPicker extends _$DirectoryPicker {
   }
 
   String? setFolder(String folderPath) {
+    final exists = Directory(folderPath).existsSync();
+    if (!exists) {
+      return null;
+    }
     state = folderPath;
     return state;
   }

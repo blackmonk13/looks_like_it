@@ -54,8 +54,7 @@ PhotoViewController usePhotoViewController({
 
 class _PhotoViewScaleStateControllerHook
     extends Hook<PhotoViewScaleStateController> {
-  const _PhotoViewScaleStateControllerHook([List<Object?>? keys])
-      : super(keys: keys);
+  const _PhotoViewScaleStateControllerHook({super.keys});
 
   @override
   _PhotoViewScaleStateControllerHookState createState() =>
@@ -79,5 +78,9 @@ class _PhotoViewScaleStateControllerHookState extends HookState<
   String get debugLabel => 'usePhotoViewScaleStateController';
 }
 
-PhotoViewScaleStateController usePhotoViewScaleStateController() =>
-    use(const _PhotoViewScaleStateControllerHook());
+PhotoViewScaleStateController usePhotoViewScaleStateController({
+  List<Object?>? keys,
+}) =>
+    use(_PhotoViewScaleStateControllerHook(
+      keys: keys,
+    ));

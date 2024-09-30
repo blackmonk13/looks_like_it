@@ -9,6 +9,7 @@ import 'package:layout/layout.dart';
 import 'package:looks_like_it/components/common/error_view.dart';
 import 'package:looks_like_it/hooks/photo_view.dart';
 import 'package:looks_like_it/imagehash/example/components/similarities_details_view.dart';
+import 'package:looks_like_it/imagehash/example/providers.dart';
 import 'package:looks_like_it/imagehash/imagehash.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:photo_view/photo_view.dart';
@@ -22,6 +23,8 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
   final ImageSimilarity item;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final pathFilters = ref.watch(pathFiltersProvider);
+
     final controller1 = usePhotoViewController();
     final controller2 = usePhotoViewController();
     final scaleStateController1 = usePhotoViewScaleStateController();
@@ -99,8 +102,9 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-          color: context.colorScheme.surfaceBright.withOpacity(.3),
-          borderRadius: BorderRadius.circular(10.0)),
+        color: context.colorScheme.surfaceBright.withOpacity(.3),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
       child: Column(
         children: [
           Padding(
@@ -111,7 +115,19 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                DeleteImageBtn(imagePath: item.image1Path),
+                DeleteImageBtn(
+                  imagePath: item.image1Path,
+                ),
+                ToolbarBtn(
+                  isSelected: pathFilters.contains(item.image1Path),
+                  icon: FluentIcons.filter_24_regular,
+                  selectedIcon: FluentIcons.filter_dismiss_24_regular,
+                  onTap: () {
+                    ref
+                        .read(pathFiltersProvider.notifier)
+                        .toggleFilter(item.image1Path);
+                  },
+                ),
                 const Spacer(),
                 ToolbarBtn(
                   onTap: () {
@@ -161,6 +177,16 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
                   onTap: () => splitView.value = !splitView.value,
                 ),
                 const Spacer(),
+                ToolbarBtn(
+                  isSelected: pathFilters.contains(item.image2Path),
+                  icon: FluentIcons.filter_24_regular,
+                  selectedIcon: FluentIcons.filter_dismiss_24_regular,
+                  onTap: () {
+                    ref
+                        .read(pathFiltersProvider.notifier)
+                        .toggleFilter(item.image2Path);
+                  },
+                ),
                 DeleteImageBtn(imagePath: item.image2Path),
               ],
             ),

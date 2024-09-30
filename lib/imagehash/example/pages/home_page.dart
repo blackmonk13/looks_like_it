@@ -22,31 +22,33 @@ class HomePage extends HookConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0.0,
-        title: true
-            ? null
-            : Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: "Breakpoint: ",
-                      children: [
-                        TextSpan(
-                          text: context.layout.breakpoint.name,
-                        ),
-                      ],
-                    ),
-                    TextSpan(text: "\t" * 5),
-                    TextSpan(
-                      text: "Width: ",
-                      children: [
-                        TextSpan(
-                          text: context.layout.width.toString(),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+        title:
+            // false
+            //     ? null
+            //     :
+            Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: "Breakpoint: ",
+                children: [
+                  TextSpan(
+                    text: context.layout.breakpoint.name,
+                  ),
+                ],
               ),
+              TextSpan(text: "\t" * 5),
+              TextSpan(
+                text: "Width: ",
+                children: [
+                  TextSpan(
+                    text: context.layout.width.toString(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
         bottom: PreferredSize(
           preferredSize: Size(
             context.screenWidth,

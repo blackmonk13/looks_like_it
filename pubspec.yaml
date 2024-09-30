@@ -50,6 +50,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   isar_generator: ^3.1.0+1
+  msix: ^3.16.8
   riverpod_generator: ^2.4.0
 
 # For information on the generic Dart part of this file, see the

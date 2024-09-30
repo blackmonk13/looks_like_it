@@ -30,8 +30,13 @@ class PersistentLSH {
   PersistentLSH(this.memoryLSH);
 
   Future<void> initialize() async {
-    final dir = await getApplicationDocumentsDirectory();
-    isar = await Isar.open([ImageHashSchema], directory: dir.path);
+    final dir = await getApplicationSupportDirectory();
+    isar = await Isar.open(
+      [ImageHashSchema],
+      name: "imagehash",
+      directory: dir.path,
+      inspector: false,
+    );
   }
 
   Future<void> addVector(String imagePath, Uint8List hashVector) async {
@@ -99,15 +104,23 @@ class ProgressReporter {
 }
 
 class AverageHash {
-  static const int DEFAULT_HASH_SIZE = 8;
-  static const int LSH_BANDS = 4;
-  static const int LSH_ROWS = 16;
+  static const int defaultHashSize = 8;
+  static const int lshBands = 4;
+  static const int lshRows = 16;
 
-  static Future<Uint8List> computeHash(String imagePath,
-      {int hashSize = DEFAULT_HASH_SIZE}) async {
+  static Future<Uint8List> computeHash(
+    String imagePath, {
+    int hashSize = defaultHashSize,
+  }) async {
     final resultPort = ReceivePort();
     await Isolate.spawn(
-        _isolateFunction, [imagePath, hashSize, resultPort.sendPort]);
+      _isolateFunction,
+      [
+        imagePath,
+        hashSize,
+        resultPort.sendPort,
+      ],
+    );
     final result = await resultPort.first;
     if (result is Uint8List) {
       return result;
@@ -137,10 +150,12 @@ class AverageHash {
       throw Exception('Failed to load image: $imagePath');
     }
 
-    final resizedImage = img.copyResize(image,
-        width: hashSize,
-        height: hashSize,
-        interpolation: img.Interpolation.average);
+    final resizedImage = img.copyResize(
+      image,
+      width: hashSize,
+      height: hashSize,
+      interpolation: img.Interpolation.average,
+    );
 
     final int pixelCount = hashSize * hashSize;
     final grayPixels = Uint8List(pixelCount);
@@ -184,11 +199,14 @@ class AverageHash {
   }
 
   static Future<Map<String, Uint8List>> computeHashesForDirectory(
-      String directoryPath,
-      {int hashSize = DEFAULT_HASH_SIZE}) async {
+    String directoryPath, {
+    int hashSize = defaultHashSize,
+  }) async {
     Directory directory = Directory(directoryPath);
-    List<FileSystemEntity> files =
-        directory.listSync(recursive: true, followLinks: false);
+    List<FileSystemEntity> files = directory.listSync(
+      recursive: true,
+      followLinks: false,
+    );
 
     List<Future<MapEntry<String, Uint8List>>> hashFutures = files
         .where((file) => file is File && _isImageFile(file.path))
@@ -209,7 +227,7 @@ class AverageHash {
 
   static Future<List<ImageSimilarity>> findSimilarImagesInFolder(
     String folderPath, {
-    int hashSize = DEFAULT_HASH_SIZE,
+    int hashSize = defaultHashSize,
     double threshold = 90.0,
   }) async {
     Directory directory = Directory(folderPath);
@@ -218,8 +236,10 @@ class AverageHash {
         .where((file) => file is File && _isImageFile(file.path))
         .toList();
 
-    Map<String, Uint8List> hashes =
-        await computeHashesForFiles(files.cast<File>(), hashSize: hashSize);
+    Map<String, Uint8List> hashes = await computeHashesForFiles(
+      files.cast<File>(),
+      hashSize: hashSize,
+    );
 
     List<ImageSimilarity> similarities = [];
     for (MapEntry<String, Uint8List> entry in hashes.entries) {
@@ -250,7 +270,7 @@ class AverageHash {
         double similarity = _calculateSimilarity(
           imageHash,
           entry.value,
-          DEFAULT_HASH_SIZE,
+          defaultHashSize,
         );
         if (similarity >= threshold) {
           similarities.add(ImageSimilarity(imagePath, entry.key, similarity));
@@ -261,8 +281,10 @@ class AverageHash {
     return similarities;
   }
 
-  static Future<Map<String, Uint8List>> computeHashesForFiles(List<File> files,
-      {int hashSize = DEFAULT_HASH_SIZE}) async {
+  static Future<Map<String, Uint8List>> computeHashesForFiles(
+    List<File> files, {
+    int hashSize = defaultHashSize,
+  }) async {
     final pool = await WorkerPool.create(Platform.numberOfProcessors);
     try {
       List<Future<MapEntry<String, Uint8List>>> hashFutures =
@@ -305,8 +327,8 @@ class LocalitySensitiveHashing {
   final Map<int, Set<String>> hashTables = {};
 
   LocalitySensitiveHashing({
-    this.bands = AverageHash.LSH_BANDS,
-    this.rows = AverageHash.LSH_ROWS,
+    this.bands = AverageHash.lshBands,
+    this.rows = AverageHash.lshRows,
   });
 
   void addHash(String imagePath, Uint8List hash) {
@@ -467,11 +489,11 @@ class EnhancedLSH {
   final List<List<int>> hashFunctions;
   final Map<int, Set<String>> hashTables = {};
 
-  EnhancedLSH(
-      {this.numHashFunctions = 100,
-      this.numBands = 20,
-      required int vectorSize})
-      : bandSize = numHashFunctions ~/ numBands,
+  EnhancedLSH({
+    this.numHashFunctions = 100,
+    this.numBands = 20,
+    required int vectorSize,
+  })  : bandSize = numHashFunctions ~/ numBands,
         hashFunctions = List.generate(
           numHashFunctions,
           (_) => List.generate(vectorSize, (_) => Random().nextInt(2)),
@@ -596,7 +618,8 @@ class StreamingImageProcessor {
   }
 
   Future<Map<String, Uint8List>> _computeHashesForBatch(
-      List<File> batch) async {
+    List<File> batch,
+  ) async {
     final hashFutures = batch.map((file) => _computeSingleHash(file));
     final hashes = await Future.wait(hashFutures);
     return Map.fromIterables(batch.map((f) => f.path), hashes);
@@ -606,12 +629,12 @@ class StreamingImageProcessor {
     try {
       return await workerPool.computeHash(
         file.path,
-        AverageHash.DEFAULT_HASH_SIZE,
+        AverageHash.defaultHashSize,
       );
     } catch (e) {
       print("Error computing hash for ${file.path}: $e");
-      // Return a placeholder hash or rethrow based on your error handling strategy
-      return Uint8List(AverageHash.DEFAULT_HASH_SIZE);
+      // Return a placeholder hash or rethrow
+      return Uint8List(AverageHash.defaultHashSize);
     }
   }
 
@@ -690,6 +713,6 @@ class ImageMetadata {
       height: image.height,
       fileSize: await file.length(),
       bitDepth: image.bitsPerChannel,
-     );
+    );
   }
 }

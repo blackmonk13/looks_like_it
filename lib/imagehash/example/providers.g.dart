@@ -362,5 +362,36 @@ final similarityThresholdProvider =
 );
 
 typedef _$SimilarityThreshold = AutoDisposeNotifier<double>;
+String _$similaritiesListHash() => r'cd4207f065257b5334bc10d21b378496e14c95d6';
+
+/// See also [SimilaritiesList].
+@ProviderFor(SimilaritiesList)
+final similaritiesListProvider = AutoDisposeAsyncNotifierProvider<
+    SimilaritiesList, List<ImageSimilarity>>.internal(
+  SimilaritiesList.new,
+  name: r'similaritiesListProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$similaritiesListHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$SimilaritiesList = AutoDisposeAsyncNotifier<List<ImageSimilarity>>;
+String _$pathFiltersHash() => r'46d019180cabde850bde26fd7be67d11cd8abaed';
+
+/// See also [PathFilters].
+@ProviderFor(PathFilters)
+final pathFiltersProvider =
+    AutoDisposeNotifierProvider<PathFilters, List<String>>.internal(
+  PathFilters.new,
+  name: r'pathFiltersProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$pathFiltersHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$PathFilters = AutoDisposeNotifier<List<String>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

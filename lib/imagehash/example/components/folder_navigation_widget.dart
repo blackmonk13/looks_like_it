@@ -4,6 +4,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:layout/layout.dart';
 import 'package:looks_like_it/hooks/undo_history.dart';
 import 'package:looks_like_it/imagehash/example/components/similarity_picker.dart';
 import 'package:looks_like_it/imagehash/example/providers.dart';
@@ -99,6 +100,7 @@ class FolderNavigationWidget extends HookConsumerWidget {
           onNavigate: (String value) {
             navigateTo(value);
           },
+          recentLocations: recentLocations,
         );
       }
     }
@@ -206,6 +208,7 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
     required this.pathParts,
     required this.textTheme,
     required this.onNavigate,
+    required this.recentLocations,
   });
 
   final ValueNotifier<bool> isEditing;
@@ -213,51 +216,199 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
   final List<String> pathParts;
   final TextStyle? textTheme;
   final ValueChanged<String> onNavigate;
+  final List<String> recentLocations;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSmallScreen = context.layout.value<bool>(
+      xs: true,
+      sm: true,
+      md: false,
+      lg: false,
+      xl: false,
+    );
+
     return GestureDetector(
       onTap: () => isEditing.value = true,
       child: Container(
         alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         constraints: boxConstraints,
         decoration: BoxDecoration(
-          border: Border.all(color: context.colorScheme.outline),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: pathParts.asMap().entries.expand((entry) {
-            int idx = entry.key;
-            String part = entry.value;
-            final thisPathList = pathParts.sublist(0, idx + 1);
-            final thisPath = path.joinAll(thisPathList);
-
-            // TODO:
-            final partBtn = PathPartBtn(
-              part: part,
-              fullPath: thisPath,
-              textTheme: textTheme,
-              onNavigate: (value) {
-                onNavigate(value);
-              },
-            );
-            if (idx < pathParts.length - 1) {
-              return [
-                partBtn,
-                BreadcrumbDropdownBtn(
-                  folderPath: thisPath,
-                  textTheme: textTheme,
-                ),
-              ];
-            }
-            return [partBtn];
-          }).toList(),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: isSmallScreen
+              ? _buildSmallScreenBreadcrumbs(context)
+              : _buildLargeScreenBreadcrumbs(),
         ),
       ),
+    );
+  }
+
+  Widget _buildSmallScreenBreadcrumbs(BuildContext context) {
+    final visibleCount = context.layout.value<int>(
+      xs: 1,
+      sm: Layout.of(context).width <= 600
+          ? 2
+          : context.layout.width <= 700
+              ? 3
+              : 4,
+    );
+    final hiddenParts = pathParts.sublist(0, pathParts.length - visibleCount);
+    final visibleParts = pathParts.sublist(pathParts.length - visibleCount);
+
+    return Row(
+      children: [
+        if (hiddenParts.isNotEmpty)
+          _buildHiddenPartsButton(context, hiddenParts),
+        ...visibleParts.asMap().entries.expand((entry) {
+          int idx = entry.key;
+          String part = entry.value;
+          final thisPathList =
+              pathParts.sublist(0, pathParts.length - visibleCount + idx + 1);
+          final thisPath = path.joinAll(thisPathList);
+
+          final partBtn = PathPartBtn(
+            part: part,
+            fullPath: thisPath,
+            textTheme: textTheme,
+            onNavigate: onNavigate,
+          );
+          if (idx < visibleParts.length - 1) {
+            return [
+              partBtn,
+              BreadcrumbDropdownBtn(
+                folderPath: thisPath,
+                textTheme: textTheme,
+              ),
+            ];
+          }
+          return [partBtn];
+        }),
+      ],
+    );
+  }
+
+  Widget _buildLargeScreenBreadcrumbs() {
+    return Row(
+      children: pathParts.asMap().entries.expand((entry) {
+        int idx = entry.key;
+        String part = entry.value;
+        final thisPathList = pathParts.sublist(0, idx + 1);
+        final thisPath = path.joinAll(thisPathList);
+
+        final partBtn = PathPartBtn(
+          part: part,
+          fullPath: thisPath,
+          textTheme: textTheme,
+          onNavigate: onNavigate,
+        );
+        if (idx < pathParts.length - 1) {
+          return [
+            partBtn,
+            BreadcrumbDropdownBtn(
+              folderPath: thisPath,
+              textTheme: textTheme,
+            ),
+          ];
+        }
+        return [partBtn];
+      }).toList(),
+    );
+  }
+
+  Widget _buildHiddenPartsButton(
+    BuildContext context,
+    List<String> hiddenParts,
+  ) {
+    return PopupMenuButton<String>(
+      position: PopupMenuPosition.under,
+      tooltip: "Other Locations",
+      shape: RoundedRectangleBorder(
+        side: BorderSide(
+          color: context.colorScheme.surfaceContainerHigh,
+        ),
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      style: const ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        minimumSize: WidgetStatePropertyAll(Size.fromWidth(32)),
+        padding: WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            FluentIcons.chevron_double_left_20_regular,
+            size: textTheme?.fontSize,
+          ),
+          const SizedBox(width: 4),
+        ],
+      ),
+      itemBuilder: (BuildContext context) => [
+        ...hiddenParts
+            .map((part) {
+              return PopupMenuItem<String>(
+                value: part,
+                child: Row(
+                  children: [
+                    Icon(
+                      FluentIcons.folder_24_filled,
+                      size: textTheme?.fontSize,
+                    ),
+                    const SizedBox(
+                      width: 8.0,
+                    ),
+                    Text(
+                      part,
+                      style: textTheme,
+                    ),
+                  ],
+                ),
+              );
+            })
+            .toList()
+            .reversed,
+        const PopupMenuDivider(),
+        ...recentLocations.take(3).map((location) {
+          return PopupMenuItem<String>(
+            value: location,
+            child: Tooltip(
+              message: location,
+              child: Row(
+                children: [
+                  Icon(
+                    FluentIcons.folder_24_filled,
+                    size: textTheme?.fontSize,
+                  ),
+                  const SizedBox(
+                    width: 8.0,
+                  ),
+                  Text(
+                    path.basename(location),
+                    style: textTheme,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+      onSelected: (String value) {
+        if (hiddenParts.contains(value)) {
+          final index = hiddenParts.indexOf(value);
+          final selectedPath = path.joinAll(pathParts.sublist(0, index + 1));
+          onNavigate(selectedPath);
+        } else {
+          onNavigate(value); // For recent locations
+        }
+      },
     );
   }
 }

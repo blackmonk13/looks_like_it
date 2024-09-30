@@ -18,9 +18,16 @@ class SimilaritiesView extends HookConsumerWidget {
   final ValueNotifier<int> selectedIndex;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncSims = ref.watch(findSimilaritiesProvider);
+    final asyncSims = ref.watch(similaritiesListProvider);
+    final pathFilters = ref.watch(pathFiltersProvider);
+
+    useEffect(() {
+      selectedIndex.value = 0;
+      return null;
+    }, [pathFilters]);
 
     return asyncSims.when(
+      skipLoadingOnRefresh: false,
       // skipLoadingOnReload: true,
       data: (similarities) {
         if (similarities.isEmpty) {
@@ -28,13 +35,6 @@ class SimilaritiesView extends HookConsumerWidget {
             child: Text("No Similarities"),
           );
         }
-
-        similarities.sort((a, b) => b.similarity.compareTo(a.similarity));
-
-        final filtered = similarities.where((similarity) {
-          return File(similarity.image1Path).existsSync() &&
-              File(similarity.image2Path).existsSync();
-        }).toList();
 
         return Row(
           children: [
@@ -45,7 +45,7 @@ class SimilaritiesView extends HookConsumerWidget {
                   : [
                       Flexible(
                         child: SimilaritiesListView(
-                          data: filtered,
+                          data: similarities,
                           selectedIndex: selectedIndex,
                         ),
                       ),
@@ -59,7 +59,7 @@ class SimilaritiesView extends HookConsumerWidget {
               ),
               child: Builder(
                 builder: (context) {
-                  final item = filtered.elementAt(selectedIndex.value);
+                  final item = similarities.elementAt(selectedIndex.value);
                   return SimilaritiesPhotoViews(
                     item: item,
                   );

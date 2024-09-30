@@ -12,7 +12,7 @@ class LSH extends _$LSH {
   @override
   Future<PersistentLSH> build() async {
     final memoryLSH = EnhancedLSH(
-      vectorSize: AverageHash.DEFAULT_HASH_SIZE * 8,
+      vectorSize: AverageHash.defaultHashSize * 8,
     );
     final persistentLSH = PersistentLSH(memoryLSH);
     await persistentLSH.initialize();
@@ -73,9 +73,26 @@ Stream<List<ImageSimilarity>> findSimilarities(FindSimilaritiesRef ref) async* {
     batch.addAll(chunk);
     yield batch;
   }
-  // return
-  //     .toList()
-  //     .asStream();
+}
+
+@riverpod
+class SimilaritiesList extends _$SimilaritiesList {
+  @override
+  Future<List<ImageSimilarity>> build() async {
+    final similarities = await ref.watch(findSimilaritiesProvider.future);
+    final pathFilters = ref.watch(pathFiltersProvider);
+    similarities.sort((a, b) => b.similarity.compareTo(a.similarity));
+    return similarities.where((similarity) {
+      final pathsExist = File(similarity.image1Path).existsSync() &&
+          File(similarity.image2Path).existsSync();
+      if (pathFilters.isNotEmpty) {
+        return pathsExist &&
+            (pathFilters.contains(similarity.image1Path) ||
+                pathFilters.contains(similarity.image2Path));
+      }
+      return pathsExist;
+    }).toList();
+  }
 }
 
 @Riverpod(keepAlive: true)
@@ -104,5 +121,24 @@ Stream<List<String>> listFolders(ListFoldersRef ref, String folderPath) async* {
       folders.add(entity.path);
       yield folders;
     }
+  }
+}
+
+@riverpod
+class PathFilters extends _$PathFilters {
+  @override
+  List<String> build() {
+    return [];
+  }
+
+  void toggleFilter(String value) {
+    final currentFilters = state;
+    if (currentFilters.contains(value)) {
+      currentFilters.remove(value);
+    } else {
+      currentFilters.add(value);
+    }
+
+    state = currentFilters;
   }
 }

@@ -1151,3 +1151,915 @@ extension ImageEntryQueryProperty
     });
   }
 }
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+extension GetImageSimilarityCollection on Isar {
+  IsarCollection<ImageSimilarity> get imageSimilaritys => this.collection();
+}
+
+const ImageSimilaritySchema = CollectionSchema(
+  name: r'ImageSimilarity',
+  id: 6138389675804802505,
+  properties: {
+    r'createdAt': PropertySchema(
+      id: 0,
+      name: r'createdAt',
+      type: IsarType.dateTime,
+    ),
+    r'similarity': PropertySchema(
+      id: 1,
+      name: r'similarity',
+      type: IsarType.double,
+    )
+  },
+  estimateSize: _imageSimilarityEstimateSize,
+  serialize: _imageSimilaritySerialize,
+  deserialize: _imageSimilarityDeserialize,
+  deserializeProp: _imageSimilarityDeserializeProp,
+  idName: r'id',
+  indexes: {
+    r'createdAt': IndexSchema(
+      id: -3433535483987302584,
+      name: r'createdAt',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'createdAt',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    )
+  },
+  links: {
+    r'image1': LinkSchema(
+      id: -3761517999485678913,
+      name: r'image1',
+      target: r'ImageEntry',
+      single: true,
+    ),
+    r'image2': LinkSchema(
+      id: -2180509875577631171,
+      name: r'image2',
+      target: r'ImageEntry',
+      single: true,
+    )
+  },
+  embeddedSchemas: {},
+  getId: _imageSimilarityGetId,
+  getLinks: _imageSimilarityGetLinks,
+  attach: _imageSimilarityAttach,
+  version: '3.1.0+1',
+);
+
+int _imageSimilarityEstimateSize(
+  ImageSimilarity object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  return bytesCount;
+}
+
+void _imageSimilaritySerialize(
+  ImageSimilarity object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeDateTime(offsets[0], object.createdAt);
+  writer.writeDouble(offsets[1], object.similarity);
+}
+
+ImageSimilarity _imageSimilarityDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = ImageSimilarity();
+  object.createdAt = reader.readDateTime(offsets[0]);
+  object.id = id;
+  object.similarity = reader.readDouble(offsets[1]);
+  return object;
+}
+
+P _imageSimilarityDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readDateTime(offset)) as P;
+    case 1:
+      return (reader.readDouble(offset)) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+Id _imageSimilarityGetId(ImageSimilarity object) {
+  return object.id;
+}
+
+List<IsarLinkBase<dynamic>> _imageSimilarityGetLinks(ImageSimilarity object) {
+  return [object.image1, object.image2];
+}
+
+void _imageSimilarityAttach(
+    IsarCollection<dynamic> col, Id id, ImageSimilarity object) {
+  object.id = id;
+  object.image1.attach(col, col.isar.collection<ImageEntry>(), r'image1', id);
+  object.image2.attach(col, col.isar.collection<ImageEntry>(), r'image2', id);
+}
+
+extension ImageSimilarityQueryWhereSort
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QWhere> {
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhere> anyId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhere> anyCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'createdAt'),
+      );
+    });
+  }
+}
+
+extension ImageSimilarityQueryWhere
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QWhereClause> {
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause> idEqualTo(
+      Id id) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IdWhereClause.between(
+        lower: id,
+        upper: id,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause>
+      idNotEqualTo(Id id) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IdWhereClause.lessThan(upper: id, includeUpper: false),
+            )
+            .addWhereClause(
+              IdWhereClause.greaterThan(lower: id, includeLower: false),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IdWhereClause.greaterThan(lower: id, includeLower: false),
+            )
+            .addWhereClause(
+              IdWhereClause.lessThan(upper: id, includeUpper: false),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause>
+      idGreaterThan(Id id, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IdWhereClause.greaterThan(lower: id, includeLower: include),
+      );
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause> idLessThan(
+      Id id,
+      {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IdWhereClause.lessThan(upper: id, includeUpper: include),
+      );
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause> idBetween(
+    Id lowerId,
+    Id upperId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IdWhereClause.between(
+        lower: lowerId,
+        includeLower: includeLower,
+        upper: upperId,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause>
+      createdAtEqualTo(DateTime createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'createdAt',
+        value: [createdAt],
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause>
+      createdAtNotEqualTo(DateTime createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [],
+              upper: [createdAt],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [createdAt],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [createdAt],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [],
+              upper: [createdAt],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause>
+      createdAtGreaterThan(
+    DateTime createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [createdAt],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause>
+      createdAtLessThan(
+    DateTime createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [],
+        upper: [createdAt],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterWhereClause>
+      createdAtBetween(
+    DateTime lowerCreatedAt,
+    DateTime upperCreatedAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [lowerCreatedAt],
+        includeLower: includeLower,
+        upper: [upperCreatedAt],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+}
+
+extension ImageSimilarityQueryFilter
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QFilterCondition> {
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      createdAtEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      createdAtGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      createdAtLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      createdAtBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'createdAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      idEqualTo(Id value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      idGreaterThan(
+    Id value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      idLessThan(
+    Id value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      idBetween(
+    Id lower,
+    Id upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      similarityEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'similarity',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      similarityGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'similarity',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      similarityLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'similarity',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      similarityBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'similarity',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+}
+
+extension ImageSimilarityQueryObject
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QFilterCondition> {}
+
+extension ImageSimilarityQueryLinks
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QFilterCondition> {
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition> image1(
+      FilterQuery<ImageEntry> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'image1');
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      image1IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'image1', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition> image2(
+      FilterQuery<ImageEntry> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'image2');
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterFilterCondition>
+      image2IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'image2', 0, true, 0, true);
+    });
+  }
+}
+
+extension ImageSimilarityQuerySortBy
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QSortBy> {
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      sortByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      sortByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      sortBySimilarity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'similarity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      sortBySimilarityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'similarity', Sort.desc);
+    });
+  }
+}
+
+extension ImageSimilarityQuerySortThenBy
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QSortThenBy> {
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      thenByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      thenByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy> thenById() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'id', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy> thenByIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      thenBySimilarity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'similarity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QAfterSortBy>
+      thenBySimilarityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'similarity', Sort.desc);
+    });
+  }
+}
+
+extension ImageSimilarityQueryWhereDistinct
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QDistinct> {
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QDistinct>
+      distinctByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'createdAt');
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, ImageSimilarity, QDistinct>
+      distinctBySimilarity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'similarity');
+    });
+  }
+}
+
+extension ImageSimilarityQueryProperty
+    on QueryBuilder<ImageSimilarity, ImageSimilarity, QQueryProperty> {
+  QueryBuilder<ImageSimilarity, int, QQueryOperations> idProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, DateTime, QQueryOperations>
+      createdAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<ImageSimilarity, double, QQueryOperations> similarityProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'similarity');
+    });
+  }
+}
+
+// **************************************************************************
+// RiverpodGenerator
+// **************************************************************************
+
+String _$similaritiesWatcherHash() =>
+    r'dfb25d4876fd6d599c195abee05f69fb089cd151';
+
+/// See also [similaritiesWatcher].
+@ProviderFor(similaritiesWatcher)
+final similaritiesWatcherProvider = AutoDisposeStreamProvider<void>.internal(
+  similaritiesWatcher,
+  name: r'similaritiesWatcherProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$similaritiesWatcherHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef SimilaritiesWatcherRef = AutoDisposeStreamProviderRef<void>;
+String _$similaritiesCountHash() => r'fab18ad6ee13035cf6e652def889e90e67f7deb7';
+
+/// See also [similaritiesCount].
+@ProviderFor(similaritiesCount)
+final similaritiesCountProvider = AutoDisposeFutureProvider<int>.internal(
+  similaritiesCount,
+  name: r'similaritiesCountProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$similaritiesCountHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef SimilaritiesCountRef = AutoDisposeFutureProviderRef<int>;
+String _$hashingSystemHash() => r'54a12a178b500eab30fd78935a466c583fc9bd5b';
+
+/// See also [HashingSystem].
+@ProviderFor(HashingSystem)
+final hashingSystemProvider =
+    AsyncNotifierProvider<HashingSystem, ImageHashSystem>.internal(
+  HashingSystem.new,
+  name: r'hashingSystemProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$hashingSystemHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$HashingSystem = AsyncNotifier<ImageHashSystem>;
+String _$comparisonControllerHash() =>
+    r'e2893d5389e26ac20016188b152116fe4e0e78e2';
+
+/// See also [ComparisonController].
+@ProviderFor(ComparisonController)
+final comparisonControllerProvider =
+    AsyncNotifierProvider<ComparisonController, ComparisonType?>.internal(
+  ComparisonController.new,
+  name: r'comparisonControllerProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$comparisonControllerHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ComparisonController = AsyncNotifier<ComparisonType?>;
+String _$similaritiesQueryHash() => r'4ef53c878fbd34d70b0c931f63498c1bd0b99b9f';
+
+/// Copied from Dart SDK
+class _SystemHash {
+  _SystemHash._();
+
+  static int combine(int hash, int value) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + value);
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
+    return hash ^ (hash >> 6);
+  }
+
+  static int finish(int hash) {
+    // ignore: parameter_assignments
+    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
+    // ignore: parameter_assignments
+    hash = hash ^ (hash >> 11);
+    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
+  }
+}
+
+abstract class _$SimilaritiesQuery
+    extends BuildlessAutoDisposeAsyncNotifier<List<ImageSimilarity>> {
+  late final int? limit;
+  late final int? offset;
+
+  FutureOr<List<ImageSimilarity>> build({
+    int? limit,
+    int? offset,
+  });
+}
+
+/// See also [SimilaritiesQuery].
+@ProviderFor(SimilaritiesQuery)
+const similaritiesQueryProvider = SimilaritiesQueryFamily();
+
+/// See also [SimilaritiesQuery].
+class SimilaritiesQueryFamily
+    extends Family<AsyncValue<List<ImageSimilarity>>> {
+  /// See also [SimilaritiesQuery].
+  const SimilaritiesQueryFamily();
+
+  /// See also [SimilaritiesQuery].
+  SimilaritiesQueryProvider call({
+    int? limit,
+    int? offset,
+  }) {
+    return SimilaritiesQueryProvider(
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  @override
+  SimilaritiesQueryProvider getProviderOverride(
+    covariant SimilaritiesQueryProvider provider,
+  ) {
+    return call(
+      limit: provider.limit,
+      offset: provider.offset,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'similaritiesQueryProvider';
+}
+
+/// See also [SimilaritiesQuery].
+class SimilaritiesQueryProvider extends AutoDisposeAsyncNotifierProviderImpl<
+    SimilaritiesQuery, List<ImageSimilarity>> {
+  /// See also [SimilaritiesQuery].
+  SimilaritiesQueryProvider({
+    int? limit,
+    int? offset,
+  }) : this._internal(
+          () => SimilaritiesQuery()
+            ..limit = limit
+            ..offset = offset,
+          from: similaritiesQueryProvider,
+          name: r'similaritiesQueryProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$similaritiesQueryHash,
+          dependencies: SimilaritiesQueryFamily._dependencies,
+          allTransitiveDependencies:
+              SimilaritiesQueryFamily._allTransitiveDependencies,
+          limit: limit,
+          offset: offset,
+        );
+
+  SimilaritiesQueryProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.limit,
+    required this.offset,
+  }) : super.internal();
+
+  final int? limit;
+  final int? offset;
+
+  @override
+  FutureOr<List<ImageSimilarity>> runNotifierBuild(
+    covariant SimilaritiesQuery notifier,
+  ) {
+    return notifier.build(
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  @override
+  Override overrideWith(SimilaritiesQuery Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: SimilaritiesQueryProvider._internal(
+        () => create()
+          ..limit = limit
+          ..offset = offset,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        limit: limit,
+        offset: offset,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeAsyncNotifierProviderElement<SimilaritiesQuery,
+      List<ImageSimilarity>> createElement() {
+    return _SimilaritiesQueryProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SimilaritiesQueryProvider &&
+        other.limit == limit &&
+        other.offset == offset;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, limit.hashCode);
+    hash = _SystemHash.combine(hash, offset.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin SimilaritiesQueryRef
+    on AutoDisposeAsyncNotifierProviderRef<List<ImageSimilarity>> {
+  /// The parameter `limit` of this provider.
+  int? get limit;
+
+  /// The parameter `offset` of this provider.
+  int? get offset;
+}
+
+class _SimilaritiesQueryProviderElement
+    extends AutoDisposeAsyncNotifierProviderElement<SimilaritiesQuery,
+        List<ImageSimilarity>> with SimilaritiesQueryRef {
+  _SimilaritiesQueryProviderElement(super.provider);
+
+  @override
+  int? get limit => (origin as SimilaritiesQueryProvider).limit;
+  @override
+  int? get offset => (origin as SimilaritiesQueryProvider).offset;
+}
+
+String _$fileOpsControllerHash() => r'e9f72a7d04411be05931c93a922ed8b9902f2be5';
+
+/// See also [FileOpsController].
+@ProviderFor(FileOpsController)
+final fileOpsControllerProvider =
+    AutoDisposeAsyncNotifierProvider<FileOpsController, void>.internal(
+  FileOpsController.new,
+  name: r'fileOpsControllerProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$fileOpsControllerHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$FileOpsController = AutoDisposeAsyncNotifier<void>;
+// ignore_for_file: type=lint
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

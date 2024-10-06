@@ -10,7 +10,7 @@ import 'package:looks_like_it/components/common/error_view.dart';
 import 'package:looks_like_it/hooks/photo_view.dart';
 import 'package:looks_like_it/imagehash/example/components/similarities_details_view.dart';
 import 'package:looks_like_it/imagehash/example/providers.dart';
-import 'package:looks_like_it/imagehash/imagehash.dart';
+import 'package:looks_like_it/imagehash/image_hashing.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:path/path.dart' as path;
@@ -18,11 +18,23 @@ import 'package:path/path.dart' as path;
 class SimilaritiesPhotoViews extends HookConsumerWidget {
   const SimilaritiesPhotoViews({
     super.key,
-    required this.item,
+    required this.itemCount,
   });
-  final ImageSimilarity item;
+  final int itemCount;
+
+  static const pageSize = 100;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(fileOpsControllerProvider);
+    final selectedIndex = ref.watch(selectedIndexProvider);
+    final page = selectedIndex ~/ pageSize;
+    final offset = page * pageSize;
+    final indexInPage = selectedIndex % pageSize;
+    final asyncSimilarities = ref.watch(similaritiesQueryProvider(
+      limit: pageSize,
+      offset: offset,
+    ));
     final pathFilters = ref.watch(pathFiltersProvider);
 
     final controller1 = usePhotoViewController();
@@ -105,191 +117,219 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
         color: context.colorScheme.surfaceBright.withOpacity(.3),
         borderRadius: BorderRadius.circular(10.0),
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 4.0,
-              horizontal: 16.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                DeleteImageBtn(
-                  imagePath: item.image1Path,
+      child: asyncSimilarities.when(
+        data: (data) {
+          final item = data.elementAtOrNull(indexInPage);
+
+          if (item == null) {
+            return const SizedBox.shrink();
+          }
+
+          final image1 = item.image1.value;
+          final image2 = item.image2.value;
+
+          final entriesDontExist = image1 == null || image2 == null;
+
+          if (entriesDontExist) {
+            return const SizedBox.shrink();
+          }
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4.0,
+                  horizontal: 16.0,
                 ),
-                ToolbarBtn(
-                  isSelected: pathFilters.contains(item.image1Path),
-                  icon: FluentIcons.filter_24_regular,
-                  selectedIcon: FluentIcons.filter_dismiss_24_regular,
-                  onTap: () {
-                    ref
-                        .read(pathFiltersProvider.notifier)
-                        .toggleFilter(item.image1Path);
-                  },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    DeleteImageBtn(
+                      image: image1,
+                      itemCount: itemCount,
+                    ),
+                    ToolbarBtn(
+                      isSelected: pathFilters.contains(image1.imagePath),
+                      icon: FluentIcons.filter_24_regular,
+                      selectedIcon: FluentIcons.filter_dismiss_24_regular,
+                      onTap: () {
+                        ref
+                            .read(pathFiltersProvider.notifier)
+                            .toggleFilter(image1.imagePath);
+                      },
+                    ),
+                    const Spacer(),
+                    ToolbarBtn(
+                      onTap: () {
+                        controller1.scale =
+                            ((controller1.scale ?? 0) - .1).clamp(0.1, 5.0);
+                      },
+                      icon: FluentIcons.zoom_out_24_regular,
+                    ),
+                    ToolbarBtn(
+                      onTap: () {
+                        controller1.scale =
+                            ((controller1.scale ?? 0) + .1).clamp(0.1, 5.0);
+                      },
+                      icon: FluentIcons.zoom_in_24_regular,
+                    ),
+                    ToolbarBtn(
+                      onTap: () {
+                        if (scaleStateController1.scaleState ==
+                            PhotoViewScaleState.originalSize) {
+                          scaleStateController1.scaleState =
+                              PhotoViewScaleState.initial;
+                          return;
+                        }
+                        scaleStateController1.scaleState =
+                            PhotoViewScaleState.originalSize;
+                      },
+                      icon: FluentIcons.zoom_fit_24_filled,
+                    ),
+                    ToolbarBtn(
+                      onTap: () {
+                        controller1.rotation =
+                            (controller1.rotation - pi / 4).clamp(-pi, pi);
+                      },
+                      icon:
+                          FluentIcons.arrow_rotate_counterclockwise_24_regular,
+                    ),
+                    ToolbarBtn(
+                      onTap: () {
+                        controller1.rotation =
+                            (controller1.rotation + pi / 4).clamp(-pi, pi);
+                      },
+                      icon: FluentIcons.arrow_rotate_clockwise_24_regular,
+                    ),
+                    ToolbarBtn(
+                      isSelected: splitView.value,
+                      selectedIcon: FluentIcons.image_split_24_filled,
+                      icon: FluentIcons.image_split_24_regular,
+                      onTap: () => splitView.value = !splitView.value,
+                    ),
+                    const Spacer(),
+                    ToolbarBtn(
+                      isSelected: pathFilters.contains(image2.imagePath),
+                      icon: FluentIcons.filter_24_regular,
+                      selectedIcon: FluentIcons.filter_dismiss_24_regular,
+                      onTap: () {
+                        ref
+                            .read(pathFiltersProvider.notifier)
+                            .toggleFilter(image2.imagePath);
+                      },
+                    ),
+                    DeleteImageBtn(
+                      image: image2,
+                      itemCount: itemCount,
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                ToolbarBtn(
-                  onTap: () {
-                    controller1.scale =
-                        ((controller1.scale ?? 0) - .1).clamp(0.1, 5.0);
-                  },
-                  icon: FluentIcons.zoom_out_24_regular,
-                ),
-                ToolbarBtn(
-                  onTap: () {
-                    controller1.scale =
-                        ((controller1.scale ?? 0) + .1).clamp(0.1, 5.0);
-                  },
-                  icon: FluentIcons.zoom_in_24_regular,
-                ),
-                ToolbarBtn(
-                  onTap: () {
-                    if (scaleStateController1.scaleState ==
-                        PhotoViewScaleState.originalSize) {
-                      scaleStateController1.scaleState =
-                          PhotoViewScaleState.initial;
-                      return;
-                    }
-                    scaleStateController1.scaleState =
-                        PhotoViewScaleState.originalSize;
-                  },
-                  icon: FluentIcons.zoom_fit_24_filled,
-                ),
-                ToolbarBtn(
-                  onTap: () {
-                    controller1.rotation =
-                        (controller1.rotation - pi / 4).clamp(-pi, pi);
-                  },
-                  icon: FluentIcons.arrow_rotate_counterclockwise_24_regular,
-                ),
-                ToolbarBtn(
-                  onTap: () {
-                    controller1.rotation =
-                        (controller1.rotation + pi / 4).clamp(-pi, pi);
-                  },
-                  icon: FluentIcons.arrow_rotate_clockwise_24_regular,
-                ),
-                ToolbarBtn(
-                  isSelected: splitView.value,
-                  selectedIcon: FluentIcons.image_split_24_filled,
-                  icon: FluentIcons.image_split_24_regular,
-                  onTap: () => splitView.value = !splitView.value,
-                ),
-                const Spacer(),
-                ToolbarBtn(
-                  isSelected: pathFilters.contains(item.image2Path),
-                  icon: FluentIcons.filter_24_regular,
-                  selectedIcon: FluentIcons.filter_dismiss_24_regular,
-                  onTap: () {
-                    ref
-                        .read(pathFiltersProvider.notifier)
-                        .toggleFilter(item.image2Path);
-                  },
-                ),
-                DeleteImageBtn(imagePath: item.image2Path),
-              ],
-            ),
-          ),
-          Visibility(
-            visible: false,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Text(
-                  "Zoom: ${zoom.value}",
-                  style: context.textTheme.bodySmall,
-                ),
-                Text(
-                  "Rotation: ${controller1.rotation.toString()}",
-                  style: context.textTheme.bodySmall,
-                ),
-                Text(
-                  "Position: ${controller1.position.toString()}",
-                  style: context.textTheme.bodySmall,
-                ),
-                Text(
-                  "ScaleState: ${scaleStateController1.scaleState.name}",
-                  style: context.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: IndexedStack(
-              index: splitView.value ? 1 : 0,
-              children: [
-                Row(
+              ),
+              Visibility(
+                visible: false,
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
-                    Flexible(
-                      child: SimilarPhotoView(
-                        imagePath: item.image1Path,
+                    Text(
+                      "Zoom: ${zoom.value}",
+                      style: context.textTheme.bodySmall,
+                    ),
+                    Text(
+                      "Rotation: ${controller1.rotation.toString()}",
+                      style: context.textTheme.bodySmall,
+                    ),
+                    Text(
+                      "Position: ${controller1.position.toString()}",
+                      style: context.textTheme.bodySmall,
+                    ),
+                    Text(
+                      "ScaleState: ${scaleStateController1.scaleState.name}",
+                      style: context.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: IndexedStack(
+                  index: splitView.value ? 1 : 0,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Flexible(
+                          child: SimilarPhotoView(
+                            image: image1,
+                            controller: controller1,
+                            scaleStateController: scaleStateController1,
+                          ),
+                        ),
+                        Flexible(
+                          child: SimilarPhotoView(
+                            image: image2,
+                            controller: controller2,
+                            scaleStateController: scaleStateController2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    BeforeAfter(
+                      autofocus: true,
+                      trackWidth: 2.0,
+                      trackColor: context.colorScheme.outlineVariant,
+                      thumbColor: context.colorScheme.outlineVariant,
+                      value: splitPosition.value,
+                      onValueChanged: (value) {
+                        splitPosition.value = value;
+                      },
+                      before: SimilarPhotoView(
+                        image: image1,
                         controller: controller1,
                         scaleStateController: scaleStateController1,
                       ),
-                    ),
-                    Flexible(
-                      child: SimilarPhotoView(
-                        imagePath: item.image2Path,
+                      after: SimilarPhotoView(
+                        image: image2,
                         controller: controller2,
                         scaleStateController: scaleStateController2,
                       ),
                     ),
                   ],
                 ),
-                BeforeAfter(
-                  autofocus: true,
-                  trackWidth: 2.0,
-                  trackColor: context.colorScheme.outlineVariant,
-                  thumbColor: context.colorScheme.outlineVariant,
-                  value: splitPosition.value,
-                  onValueChanged: (value) {
-                    splitPosition.value = value;
-                  },
-                  before: SimilarPhotoView(
-                    imagePath: item.image1Path,
-                    controller: controller1,
-                    scaleStateController: scaleStateController1,
-                  ),
-                  after: SimilarPhotoView(
-                    imagePath: item.image2Path,
-                    controller: controller2,
-                    scaleStateController: scaleStateController2,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SimilaritiesDetailsView(item: item),
-        ],
+              ),
+              SimilaritiesDetailsView(
+                item: item,
+              ),
+            ],
+          );
+        },
+        error: (error, stackTrace) {
+          return AsyncErrorView(
+            error: error,
+            stackTrace: stackTrace,
+          );
+        },
+        loading: () {
+          return const SizedBox.shrink();
+        },
       ),
     );
   }
 }
 
-class DeleteImageBtn extends StatelessWidget {
+class DeleteImageBtn extends ConsumerWidget {
   const DeleteImageBtn({
     super.key,
-    required this.imagePath,
+    required this.image,
+    required this.itemCount,
   });
-
-  final String imagePath;
+  final int itemCount;
+  final ImageEntry image;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ToolbarBtn(
       icon: FluentIcons.delete_24_regular,
       onTap: () async {
         if (!context.mounted) {
-          return;
-        }
-        final imageFile = File(imagePath);
-        if (!await imageFile.exists()) {
-          context.showErrorSnackBar(
-            message:
-                "${imageFile.path} does not exist or has already been deleted",
-          );
           return;
         }
 
@@ -309,7 +349,7 @@ class DeleteImageBtn extends StatelessWidget {
                             text: "Are you sure you want to delete ",
                           ),
                           TextSpan(
-                              text: path.basename(imageFile.path),
+                              text: path.basename(image.imagePath),
                               style: context.textTheme.labelSmall),
                           const TextSpan(
                             text: "?\n",
@@ -366,15 +406,17 @@ class DeleteImageBtn extends StatelessWidget {
           return;
         }
 
-        final deleted = await imageFile.delete();
-        if (await deleted.exists()) {
-          context.showErrorSnackBar(
-            message: "Error deleting ${imageFile.path}",
-          );
-          return;
-        }
+        await ref
+            .read(fileOpsControllerProvider.notifier)
+            .deleteFile(image.imagePath);
 
-        context.showSnackBar(message: "${imageFile.path} has been deleted");
+        ref
+            .read(selectedIndexProvider.notifier)
+            .selectNextOrPrevious(itemCount);
+
+        context.showSnackBar(
+          message: "${path.basename(image.imagePath)} has been deleted",
+        );
       },
     );
   }
@@ -416,11 +458,11 @@ class ToolbarBtn extends HookConsumerWidget {
 class SimilarPhotoView extends HookConsumerWidget {
   const SimilarPhotoView({
     super.key,
-    required this.imagePath,
+    required this.image,
     required this.controller,
     required this.scaleStateController,
   });
-  final String imagePath;
+  final ImageEntry image;
   final PhotoViewController controller;
   final PhotoViewScaleStateController scaleStateController;
   @override
@@ -437,7 +479,7 @@ class SimilarPhotoView extends HookConsumerWidget {
         scaleStateController: scaleStateController,
         enablePanAlways: true,
         imageProvider: FileImage(
-          File(imagePath),
+          File(image.imagePath),
         ),
         filterQuality: FilterQuality.high,
         backgroundDecoration: BoxDecoration(

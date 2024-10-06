@@ -1,12 +1,8 @@
-import 'dart:io';
-
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:looks_like_it/components/common/error_view.dart';
-import 'package:looks_like_it/imagehash/example/providers.dart';
-import 'package:looks_like_it/imagehash/imagehash.dart';
+import 'package:looks_like_it/imagehash/image_hashing.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:looks_like_it/utils/functions.dart';
 import 'package:path/path.dart' as path;
@@ -20,13 +16,11 @@ class SimilaritiesDetailsView extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncImageMeta1 = ref.watch(imageMetadataProvider(item.image1Path));
-    final asyncImageMeta2 = ref.watch(imageMetadataProvider(item.image2Path));
-
     // final controller = useExpansionTileController();
     final expanded = useState<bool>(false);
 
-    final textStyle = context.textTheme.labelSmall;
+    final image1 = item.image1.value;
+    final image2 = item.image2.value;
 
     return ExpansionTile(
       // controller: controller,
@@ -49,60 +43,20 @@ class SimilaritiesDetailsView extends HookConsumerWidget {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          asyncImageMeta1.when(
-            data: (data) {
-              return CollapsedMetaTitle(
-                expanded: expanded,
-                imagePath: item.image1Path,
-                data: data,
-              );
-            },
-            error: (error, stackTrace) {
-              return Text(
-                path.basename(item.image1Path),
-                style: textStyle,
-              );
-            },
-            loading: () {
-              return Text(
-                path.basename(item.image1Path),
-                style: textStyle,
-              );
-            },
+          Expanded(
+            child: CollapsedMetaTitle(
+              expanded: expanded,
+              data: image1,
+            ),
           ),
           VerticalDivider(
             color: context.colorScheme.outline,
           ),
-          asyncImageMeta2.when(
-            data: (data) {
-              return CollapsedMetaTitle(
-                expanded: expanded,
-                imagePath: item.image2Path,
-                data: data,
-              );
-            },
-            error: (error, stackTrace) {
-              return Text.rich(
-                TextSpan(
-                  children: [
-                    if (error is PathNotFoundException) ...[
-                      const TextSpan(text: "File not found"),
-                      const TextSpan(text: "\n"),
-                    ],
-                    TextSpan(
-                      text: path.basename(item.image2Path),
-                    ),
-                  ],
-                ),
-                style: textStyle,
-              );
-            },
-            loading: () {
-              return Text(
-                path.basename(item.image2Path),
-                style: textStyle,
-              );
-            },
+          Expanded(
+            child: CollapsedMetaTitle(
+              expanded: expanded,
+              data: image2,
+            ),
           ),
         ],
       ),
@@ -111,12 +65,12 @@ class SimilaritiesDetailsView extends HookConsumerWidget {
           children: <Widget>[
             Expanded(
               child: AsyncMetadataView(
-                imagePath: item.image1Path,
+                image: image1,
               ),
             ),
             Expanded(
               child: AsyncMetadataView(
-                imagePath: item.image2Path,
+                image: image2,
               ),
             ),
           ],
@@ -130,17 +84,29 @@ class CollapsedMetaTitle extends StatelessWidget {
   const CollapsedMetaTitle({
     super.key,
     required this.expanded,
-    required this.imagePath,
     required this.data,
   });
 
   final ValueNotifier<bool> expanded;
-  final String imagePath;
-  final ImageMetadata data;
+  final ImageEntry? data;
 
   @override
   Widget build(BuildContext context) {
     final textStyle = context.textTheme.labelSmall;
+
+    if (data == null) {
+      return Text.rich(
+        const TextSpan(
+          children: [
+            TextSpan(text: "File not found"),
+            TextSpan(text: "\n"),
+          ],
+        ),
+        style: textStyle,
+        maxLines: 1,
+      );
+    }
+
     return Text.rich(
       TextSpan(
         style: textStyle?.copyWith(
@@ -149,14 +115,14 @@ class CollapsedMetaTitle extends StatelessWidget {
         children: [
           if (expanded.value)
             TextSpan(
-              text: path.basename(imagePath),
+              text: path.basename(data!.imagePath),
             )
           else ...[
             TextSpan(
               children: [
-                TextSpan(text: data.width.toString()),
+                TextSpan(text: data!.width.toString()),
                 const TextSpan(text: " x "),
-                TextSpan(text: data.height.toString()),
+                TextSpan(text: data!.height.toString()),
               ],
             ),
             TextSpan(text: "\t" * 5),
@@ -164,7 +130,7 @@ class CollapsedMetaTitle extends StatelessWidget {
               children: [
                 TextSpan(
                   text: formatFileSize(
-                    data.fileSize.toString(),
+                    data!.fileSize.toString(),
                   ),
                 ),
               ],
@@ -172,19 +138,20 @@ class CollapsedMetaTitle extends StatelessWidget {
             TextSpan(text: "\t" * 5),
             TextSpan(
               children: [
-                TextSpan(text: data.bitDepth.toString()),
+                TextSpan(text: data!.bitDepth.toString()),
                 const TextSpan(text: " bit"),
               ],
             ),
             if (!expanded.value) ...[
               const TextSpan(text: "\n"),
               TextSpan(
-                text: path.basename(imagePath),
+                text: path.basename(data!.imagePath),
               ),
             ]
           ]
         ],
       ),
+      maxLines: 2,
     );
   }
 }
@@ -192,66 +159,53 @@ class CollapsedMetaTitle extends StatelessWidget {
 class AsyncMetadataView extends HookConsumerWidget {
   const AsyncMetadataView({
     super.key,
-    required this.imagePath,
+    required this.image,
   });
-  final String imagePath;
+  final ImageEntry? image;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncImageMeta = ref.watch(imageMetadataProvider(imagePath));
-    return asyncImageMeta.when(
-      data: (data) {
-        return Column(
+    if (image == null) {
+      return const Center(
+        child: Column(
           children: [
-            SimilarityDetailsTile(
-              title: "Dimensions",
-              details: [
-                data.width.toString(),
-                " x ",
-                data.height.toString(),
-              ],
+            Icon(
+              FluentIcons.image_off_24_filled,
+              size: 24 * 3,
             ),
-            SimilarityDetailsTile(
-              title: "Bit Depth",
-              details: [data.bitDepth.toString(), " bit"],
-            ),
-            SimilarityDetailsTile(
-              title: "Size",
-              details: [
-                formatFileSize(
-                  data.fileSize.toString(),
-                ),
-              ],
-            ),
-            SimilarityDetailsTile(
-              title: "File Path",
-              details: [data.path],
+            Text("File Missing")
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        SimilarityDetailsTile(
+          title: "Dimensions",
+          details: [
+            image!.width.toString(),
+            " x ",
+            image!.height.toString(),
+          ],
+        ),
+        SimilarityDetailsTile(
+          title: "Bit Depth",
+          details: [image!.bitDepth.toString(), " bit"],
+        ),
+        SimilarityDetailsTile(
+          title: "Size",
+          details: [
+            formatFileSize(
+              image!.fileSize.toString(),
             ),
           ],
-        );
-      },
-      error: (error, stackTrace) {
-        if (error is PathNotFoundException) {
-            return const Center(
-              child: Column(
-                children: [
-                  Icon(
-                    FluentIcons.image_off_24_filled,
-                    size: 24 * 3,
-                  ),
-                  Text("File Missing")
-                ],
-              ),
-            );
-          }
-        return AsyncErrorView(
-          error: error,
-          stackTrace: stackTrace,
-        );
-      },
-      loading: () {
-        return const SizedBox.shrink();
-      },
+        ),
+        SimilarityDetailsTile(
+          title: "File Path",
+          details: [image!.imagePath],
+        ),
+      ],
     );
   }
 }

@@ -15,19 +15,25 @@ class SimilarityPicker extends HookConsumerWidget {
 
     return IconButton(
       onPressed: () async {
+        double updated = similarity;
         await showDialog(
           context: context,
           builder: (context) {
             return SimilaritySliderDialog(
               initialValue: similarity,
               onChanged: (value) {
-                ref
-                    .read(similarityThresholdProvider.notifier)
-                    .setThreshold(value);
+                updated = value;
               },
             );
           },
         );
+
+        if (updated == similarity) {
+          return;
+        }
+
+        ref.read(similarityThresholdProvider.notifier).setThreshold(updated);
+        ref.invalidate(selectedIndexProvider);
       },
       icon: SizedBox.square(
         dimension: 20,

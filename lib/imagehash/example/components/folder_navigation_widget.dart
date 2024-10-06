@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -8,7 +9,6 @@ import 'package:layout/layout.dart';
 import 'package:looks_like_it/hooks/undo_history.dart';
 import 'package:looks_like_it/imagehash/example/components/similarity_picker.dart';
 import 'package:looks_like_it/imagehash/example/providers.dart';
-import 'package:looks_like_it/providers/files.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:path/path.dart' as path;
 
@@ -19,11 +19,13 @@ class FolderNavigationWidget extends HookConsumerWidget {
     required this.recentLocations,
     required this.onPathChanged,
     required this.onRecentChanged,
+    required this.onRefresh,
   });
   final String initialPath;
   final List<String> recentLocations;
   final ValueChanged<String> onPathChanged;
   final ValueChanged<List<String>> onRecentChanged;
+  final RefreshCallback onRefresh;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pathController = useTextEditingController(text: initialPath);
@@ -62,7 +64,8 @@ class FolderNavigationWidget extends HookConsumerWidget {
         minHeight: 8.0,
         maxHeight: fontSize == null ? double.infinity : fontSize + 16,
       );
-      if (isEditing.value) {
+
+      if (isEditing.value || pathController.text.isEmpty) {
         return TextField(
           controller: pathController,
           undoController: undoController,
@@ -74,15 +77,6 @@ class FolderNavigationWidget extends HookConsumerWidget {
             border: const OutlineInputBorder(),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
             constraints: boxConstraints,
-            // suffixIcon: InkWell(
-            //   child: const Icon(
-            //     FluentIcons.checkmark_24_regular,
-            //   ),
-            //   onTap: () {
-            //     isEditing.value = false;
-            //     navigateTo(pathController.text);
-            //   },
-            // ),
           ),
           onSubmitted: (value) {
             isEditing.value = false;
@@ -91,6 +85,8 @@ class FolderNavigationWidget extends HookConsumerWidget {
         );
       } else {
         List<String> pathParts = path.split(currentPath);
+
+        print("PathParts: ${pathParts.length}");
 
         return BreadcrumbsBuilder(
           isEditing: isEditing,
@@ -132,6 +128,7 @@ class FolderNavigationWidget extends HookConsumerWidget {
             // ),
             PopupMenuButton<String>(
               position: PopupMenuPosition.under,
+              tooltip: "History",
               padding: const EdgeInsets.symmetric(
                 vertical: 2.0,
                 horizontal: 8.0,
@@ -174,17 +171,20 @@ class FolderNavigationWidget extends HookConsumerWidget {
         Expanded(
           child: buildPathDisplay(),
         ),
+        const SizedBox(width: 8),
+        if (pathController.text.isNotEmpty)
+          RefreshBtn(
+            onRefresh: onRefresh,
+          ),
         InkWell(
           onTap: () async {
-            final folderPath = await ref
-                .read(
-                  directoryPickerProvider.notifier,
-                )
-                .pickFolder();
+            String? folderPath = await FilePicker.platform.getDirectoryPath();
+
             if (folderPath == null) {
+              // User canceled the picker
               return;
             }
-            pathController.text = folderPath;
+            navigateTo(folderPath);
           },
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
@@ -196,6 +196,26 @@ class FolderNavigationWidget extends HookConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class RefreshBtn extends StatelessWidget {
+  const RefreshBtn({
+    super.key,
+    required this.onRefresh,
+  });
+
+  final RefreshCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onRefresh,
+      child: const Icon(
+        FluentIcons.arrow_clockwise_16_regular,
+        size: 16,
+      ),
     );
   }
 }
@@ -220,14 +240,6 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSmallScreen = context.layout.value<bool>(
-      xs: true,
-      sm: true,
-      md: false,
-      lg: false,
-      xl: false,
-    );
-
     return GestureDetector(
       onTap: () => isEditing.value = true,
       child: Container(
@@ -240,15 +252,21 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
         ),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: isSmallScreen
-              ? _buildSmallScreenBreadcrumbs(context)
-              : _buildLargeScreenBreadcrumbs(),
+          child: Row(
+            children: [
+              ...context.layout.value<List<Widget>>(
+                xs: _buildSmallScreenBreadcrumbs(context),
+                sm: _buildSmallScreenBreadcrumbs(context),
+                md: _buildLargeScreenBreadcrumbs(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSmallScreenBreadcrumbs(BuildContext context) {
+  List<Widget> _buildSmallScreenBreadcrumbs(BuildContext context) {
     final visibleCount = context.layout.value<int>(
       xs: 1,
       sm: Layout.of(context).width <= 600
@@ -260,44 +278,13 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
     final hiddenParts = pathParts.sublist(0, pathParts.length - visibleCount);
     final visibleParts = pathParts.sublist(pathParts.length - visibleCount);
 
-    return Row(
-      children: [
-        if (hiddenParts.isNotEmpty)
-          _buildHiddenPartsButton(context, hiddenParts),
-        ...visibleParts.asMap().entries.expand((entry) {
-          int idx = entry.key;
-          String part = entry.value;
-          final thisPathList =
-              pathParts.sublist(0, pathParts.length - visibleCount + idx + 1);
-          final thisPath = path.joinAll(thisPathList);
-
-          final partBtn = PathPartBtn(
-            part: part,
-            fullPath: thisPath,
-            textTheme: textTheme,
-            onNavigate: onNavigate,
-          );
-          if (idx < visibleParts.length - 1) {
-            return [
-              partBtn,
-              BreadcrumbDropdownBtn(
-                folderPath: thisPath,
-                textTheme: textTheme,
-              ),
-            ];
-          }
-          return [partBtn];
-        }),
-      ],
-    );
-  }
-
-  Widget _buildLargeScreenBreadcrumbs() {
-    return Row(
-      children: pathParts.asMap().entries.expand((entry) {
+    return [
+      if (hiddenParts.isNotEmpty) _buildHiddenPartsButton(context, hiddenParts),
+      ...visibleParts.asMap().entries.expand((entry) {
         int idx = entry.key;
         String part = entry.value;
-        final thisPathList = pathParts.sublist(0, idx + 1);
+        final thisPathList =
+            pathParts.sublist(0, pathParts.length - visibleCount + idx + 1);
         final thisPath = path.joinAll(thisPathList);
 
         final partBtn = PathPartBtn(
@@ -306,7 +293,7 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
           textTheme: textTheme,
           onNavigate: onNavigate,
         );
-        if (idx < pathParts.length - 1) {
+        if (idx < visibleParts.length - 1) {
           return [
             partBtn,
             BreadcrumbDropdownBtn(
@@ -316,8 +303,34 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
           ];
         }
         return [partBtn];
-      }).toList(),
-    );
+      }),
+    ];
+  }
+
+  List<Widget> _buildLargeScreenBreadcrumbs() {
+    return pathParts.asMap().entries.expand((entry) {
+      int idx = entry.key;
+      String part = entry.value;
+      final thisPathList = pathParts.sublist(0, idx + 1);
+      final thisPath = path.joinAll(thisPathList);
+
+      final partBtn = PathPartBtn(
+        part: part,
+        fullPath: thisPath,
+        textTheme: textTheme,
+        onNavigate: onNavigate,
+      );
+      if (idx < pathParts.length - 1) {
+        return [
+          partBtn,
+          BreadcrumbDropdownBtn(
+            folderPath: thisPath,
+            textTheme: textTheme,
+          ),
+        ];
+      }
+      return [partBtn];
+    }).toList();
   }
 
   Widget _buildHiddenPartsButton(

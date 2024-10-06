@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:layout/layout.dart';
 import 'package:looks_like_it/imagehash/example/components/similarity_indicator.dart';
-import 'package:looks_like_it/imagehash/imagehash.dart';
+import 'package:looks_like_it/imagehash/image_hashing.dart';
+
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:path/path.dart' as path;
 
@@ -25,6 +26,8 @@ class SimilarityListTile extends StatelessWidget {
       sm: context.layout.width < 900 ? 60 : 36,
     );
     final textStyle = context.textTheme.labelSmall;
+    final image1 = item.image1.value;
+    final image2 = item.image2.value;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10.0),
@@ -54,15 +57,17 @@ class SimilarityListTile extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10.0),
-                image: DecorationImage(
-                  image: ResizeImage(
-                    FileImage(
-                      File(item.image1Path),
-                    ),
-                    width: size,
-                    height: size,
-                  ),
-                ),
+                image: image1 == null
+                    ? null
+                    : DecorationImage(
+                        image: ResizeImage(
+                          FileImage(
+                            File(image1.imagePath),
+                          ),
+                          width: size,
+                          height: size,
+                        ),
+                      ),
               ),
             ),
             ...context.layout.value(
@@ -78,12 +83,12 @@ class SimilarityListTile extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              path.basenameWithoutExtension(item.image1Path),
+                              path.basenameWithoutExtension(image1?.imagePath ?? "no image"),
                               maxLines: 1,
                               style: textStyle,
                             ),
                             Text(
-                              path.basenameWithoutExtension(item.image2Path),
+                              path.basenameWithoutExtension(image2?.imagePath ?? "no image"),
                               maxLines: 1,
                               style: textStyle,
                             ),

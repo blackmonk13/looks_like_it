@@ -1,48 +1,16 @@
 import 'dart:io';
 
+import 'package:isar/isar.dart';
 import 'package:looks_like_it/imagehash/example/utils.dart';
-import 'package:looks_like_it/imagehash/imagehash.dart';
+import 'package:looks_like_it/imagehash/image_hashing.dart';
 import 'package:looks_like_it/providers/files.dart';
+import 'package:looks_like_it/utils/prefs.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'providers.g.dart';
 
 @Riverpod(keepAlive: true)
-class LSH extends _$LSH {
-  @override
-  Future<PersistentLSH> build() async {
-    final memoryLSH = EnhancedLSH(
-      vectorSize: AverageHash.defaultHashSize * 8,
-    );
-    final persistentLSH = PersistentLSH(memoryLSH);
-    await persistentLSH.initialize();
-    await persistentLSH.loadFromDatabase();
-    ref.onDispose(() async {
-      await persistentLSH.isar.clear();
-      await persistentLSH.isar.close();
-    });
-    return persistentLSH;
-  }
-}
-
-@Riverpod(keepAlive: true)
-class ImageProcessor extends _$ImageProcessor {
-  @override
-  Future<StreamingImageProcessor> build() async {
-    final persistentLSH = ref.watch(lSHProvider).requireValue;
-    final workerPool = await WorkerPool.create(
-      Platform.numberOfProcessors,
-    );
-    final processor = StreamingImageProcessor(workerPool, persistentLSH);
-    ref.onDispose(() async {
-      await workerPool.close();
-    });
-
-    return processor;
-  }
-}
-
-@riverpod
 class SimilarityThreshold extends _$SimilarityThreshold {
   @override
   double build() {
@@ -55,61 +23,48 @@ class SimilarityThreshold extends _$SimilarityThreshold {
 }
 
 @riverpod
-Stream<List<ImageSimilarity>> findSimilarities(FindSimilaritiesRef ref) async* {
-  final folderPath = ref.watch(directoryPickerProvider);
-  final processor = ref.watch(imageProcessorProvider).requireValue;
-  final threshold = ref.watch(similarityThresholdProvider);
-
-  List<ImageSimilarity> batch = [];
-
-  if (folderPath == null) {
-    yield batch;
-    return;
-  }
-
-  await for (final chunk in processor
-      .findSimilarImages(folderPath, threshold: threshold)
-      .chunked(10)) {
-    batch.addAll(chunk);
-    yield batch;
-  }
-}
-
-@riverpod
 class SimilaritiesList extends _$SimilaritiesList {
   @override
   Future<List<ImageSimilarity>> build() async {
-    final similarities = await ref.watch(findSimilaritiesProvider.future);
-    final pathFilters = ref.watch(pathFiltersProvider);
-    similarities.sort((a, b) => b.similarity.compareTo(a.similarity));
-    return similarities.where((similarity) {
-      final pathsExist = File(similarity.image1Path).existsSync() &&
-          File(similarity.image2Path).existsSync();
-      if (pathFilters.isNotEmpty) {
-        return pathsExist &&
-            (pathFilters.contains(similarity.image1Path) ||
-                pathFilters.contains(similarity.image2Path));
-      }
-      return pathsExist;
-    }).toList();
+    // final similarities = await ref.watch(findSimilaritiesProvider.future);
+    // final pathFilters = ref.watch(pathFiltersProvider);
+    // similarities.sort((a, b) => b.similarity.compareTo(a.similarity));
+    // return similarities.where((similarity) {
+    //   final pathsExist = File(similarity.image1Path).existsSync() &&
+    //       File(similarity.image2Path).existsSync();
+    //   if (pathFilters.isNotEmpty) {
+    //     return pathsExist &&
+    //         (pathFilters.contains(similarity.image1Path) ||
+    //             pathFilters.contains(similarity.image2Path));
+    //   }
+    //   return pathsExist;
+    // }).toList();
+    return [];
   }
+}
+
+@Riverpod(keepAlive: true)
+FutureOr<Isar> isar(IsarRef ref) async {
+  final dir = await getApplicationSupportDirectory();
+  final isar = await Isar.open(
+    [...ImageHashSystem.schemas],
+    directory: dir.path,
+    inspector: false,
+  );
+  ref.onDispose(() => isar.close());
+  return isar;
 }
 
 @Riverpod(keepAlive: true)
 Future<void> appStartup(AppStartupRef ref) async {
   ref.onDispose(() {
     // ensure we invalidate all the providers we depend on
-    ref.invalidate(lSHProvider);
-    ref.invalidate(imageProcessorProvider);
+    ref.invalidate(hashingSystemProvider);
+    ref.invalidate(isarProvider);
   });
   // all asynchronous app initialization code should belong here:
-  await ref.watch(lSHProvider.future);
-  await ref.watch(imageProcessorProvider.future);
-}
-
-@riverpod
-FutureOr<ImageMetadata> imageMetadata(ImageMetadataRef ref, String filePath) {
-  return ImageMetadata.fromFile(filePath);
+  await ref.watch(isarProvider.future);
+  await ref.watch(hashingSystemProvider.future);
 }
 
 @riverpod
@@ -140,5 +95,39 @@ class PathFilters extends _$PathFilters {
     }
 
     state = currentFilters;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class ScrollPosition extends _$ScrollPosition {
+  @override
+  double build(String key) {
+    return 0.0;
+  }
+
+  void updatePosition(double position) {
+    state = position;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class SelectedIndex extends _$SelectedIndex {
+  @override
+  int build() {
+    return 0;
+  }
+
+  void select(int index) {
+    state = index;
+  }
+
+  void selectNextOrPrevious(int totalCount) {
+    final currentIndex = state;
+    if (totalCount > 0) {
+      state = currentIndex < totalCount - 1 ? currentIndex : currentIndex - 1;
+    } else {
+      // FIXME:
+      state = 0;
+    }
   }
 }

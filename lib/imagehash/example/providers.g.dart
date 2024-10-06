@@ -6,24 +6,21 @@ part of 'providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$findSimilaritiesHash() => r'47ed60fc56e49b57a6f0140ce0ab931ed28879c4';
+String _$isarHash() => r'2f7146697b8526ed8bc34456359f37d90cf8fdfe';
 
-/// See also [findSimilarities].
-@ProviderFor(findSimilarities)
-final findSimilaritiesProvider =
-    AutoDisposeStreamProvider<List<ImageSimilarity>>.internal(
-  findSimilarities,
-  name: r'findSimilaritiesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$findSimilaritiesHash,
+/// See also [isar].
+@ProviderFor(isar)
+final isarProvider = FutureProvider<Isar>.internal(
+  isar,
+  name: r'isarProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$isarHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-typedef FindSimilaritiesRef
-    = AutoDisposeStreamProviderRef<List<ImageSimilarity>>;
-String _$appStartupHash() => r'956de93366224fcc5612e5751416603ccca2e361';
+typedef IsarRef = FutureProviderRef<Isar>;
+String _$appStartupHash() => r'4df61a08b2afc4d8cfa280758a9003e4d3727675';
 
 /// See also [appStartup].
 @ProviderFor(appStartup)
@@ -37,7 +34,7 @@ final appStartupProvider = FutureProvider<void>.internal(
 );
 
 typedef AppStartupRef = FutureProviderRef<void>;
-String _$imageMetadataHash() => r'bc0ddc9cd3ac06b4c8399ce574a217663a6427ef';
+String _$listFoldersHash() => r'dc89b5882864f27092c618e21dcfa7cba5763b06';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -59,135 +56,6 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
-
-/// See also [imageMetadata].
-@ProviderFor(imageMetadata)
-const imageMetadataProvider = ImageMetadataFamily();
-
-/// See also [imageMetadata].
-class ImageMetadataFamily extends Family<AsyncValue<ImageMetadata>> {
-  /// See also [imageMetadata].
-  const ImageMetadataFamily();
-
-  /// See also [imageMetadata].
-  ImageMetadataProvider call(
-    String filePath,
-  ) {
-    return ImageMetadataProvider(
-      filePath,
-    );
-  }
-
-  @override
-  ImageMetadataProvider getProviderOverride(
-    covariant ImageMetadataProvider provider,
-  ) {
-    return call(
-      provider.filePath,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'imageMetadataProvider';
-}
-
-/// See also [imageMetadata].
-class ImageMetadataProvider extends AutoDisposeFutureProvider<ImageMetadata> {
-  /// See also [imageMetadata].
-  ImageMetadataProvider(
-    String filePath,
-  ) : this._internal(
-          (ref) => imageMetadata(
-            ref as ImageMetadataRef,
-            filePath,
-          ),
-          from: imageMetadataProvider,
-          name: r'imageMetadataProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$imageMetadataHash,
-          dependencies: ImageMetadataFamily._dependencies,
-          allTransitiveDependencies:
-              ImageMetadataFamily._allTransitiveDependencies,
-          filePath: filePath,
-        );
-
-  ImageMetadataProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.filePath,
-  }) : super.internal();
-
-  final String filePath;
-
-  @override
-  Override overrideWith(
-    FutureOr<ImageMetadata> Function(ImageMetadataRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: ImageMetadataProvider._internal(
-        (ref) => create(ref as ImageMetadataRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        filePath: filePath,
-      ),
-    );
-  }
-
-  @override
-  AutoDisposeFutureProviderElement<ImageMetadata> createElement() {
-    return _ImageMetadataProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is ImageMetadataProvider && other.filePath == filePath;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, filePath.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
-}
-
-mixin ImageMetadataRef on AutoDisposeFutureProviderRef<ImageMetadata> {
-  /// The parameter `filePath` of this provider.
-  String get filePath;
-}
-
-class _ImageMetadataProviderElement
-    extends AutoDisposeFutureProviderElement<ImageMetadata>
-    with ImageMetadataRef {
-  _ImageMetadataProviderElement(super.provider);
-
-  @override
-  String get filePath => (origin as ImageMetadataProvider).filePath;
-}
-
-String _$listFoldersHash() => r'dc89b5882864f27092c618e21dcfa7cba5763b06';
 
 /// See also [listFolders].
 @ProviderFor(listFolders)
@@ -315,43 +183,13 @@ class _ListFoldersProviderElement
   String get folderPath => (origin as ListFoldersProvider).folderPath;
 }
 
-String _$lSHHash() => r'7b99405dfb892839140df5af6835fea969ed8080';
-
-/// See also [LSH].
-@ProviderFor(LSH)
-final lSHProvider = AsyncNotifierProvider<LSH, PersistentLSH>.internal(
-  LSH.new,
-  name: r'lSHProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$lSHHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$LSH = AsyncNotifier<PersistentLSH>;
-String _$imageProcessorHash() => r'd474d0df7496a3f72baf2ec756b3a6d0faf8bff9';
-
-/// See also [ImageProcessor].
-@ProviderFor(ImageProcessor)
-final imageProcessorProvider =
-    AsyncNotifierProvider<ImageProcessor, StreamingImageProcessor>.internal(
-  ImageProcessor.new,
-  name: r'imageProcessorProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$imageProcessorHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$ImageProcessor = AsyncNotifier<StreamingImageProcessor>;
 String _$similarityThresholdHash() =>
-    r'a22c194ded6eaeef3a5ed1a3fb66fe606b37bfbd';
+    r'83ccb4792b207a7783018538fc24246d230da49a';
 
 /// See also [SimilarityThreshold].
 @ProviderFor(SimilarityThreshold)
 final similarityThresholdProvider =
-    AutoDisposeNotifierProvider<SimilarityThreshold, double>.internal(
+    NotifierProvider<SimilarityThreshold, double>.internal(
   SimilarityThreshold.new,
   name: r'similarityThresholdProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -361,8 +199,8 @@ final similarityThresholdProvider =
   allTransitiveDependencies: null,
 );
 
-typedef _$SimilarityThreshold = AutoDisposeNotifier<double>;
-String _$similaritiesListHash() => r'cd4207f065257b5334bc10d21b378496e14c95d6';
+typedef _$SimilarityThreshold = Notifier<double>;
+String _$similaritiesListHash() => r'0f7573236a79d9cffa46ba3dc1a62612fce5f59d';
 
 /// See also [SimilaritiesList].
 @ProviderFor(SimilaritiesList)
@@ -393,5 +231,162 @@ final pathFiltersProvider =
 );
 
 typedef _$PathFilters = AutoDisposeNotifier<List<String>>;
+String _$scrollPositionHash() => r'99efa913e59be8488e40567fea7b4da9e301c39d';
+
+abstract class _$ScrollPosition extends BuildlessNotifier<double> {
+  late final String key;
+
+  double build(
+    String key,
+  );
+}
+
+/// See also [ScrollPosition].
+@ProviderFor(ScrollPosition)
+const scrollPositionProvider = ScrollPositionFamily();
+
+/// See also [ScrollPosition].
+class ScrollPositionFamily extends Family<double> {
+  /// See also [ScrollPosition].
+  const ScrollPositionFamily();
+
+  /// See also [ScrollPosition].
+  ScrollPositionProvider call(
+    String key,
+  ) {
+    return ScrollPositionProvider(
+      key,
+    );
+  }
+
+  @override
+  ScrollPositionProvider getProviderOverride(
+    covariant ScrollPositionProvider provider,
+  ) {
+    return call(
+      provider.key,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'scrollPositionProvider';
+}
+
+/// See also [ScrollPosition].
+class ScrollPositionProvider
+    extends NotifierProviderImpl<ScrollPosition, double> {
+  /// See also [ScrollPosition].
+  ScrollPositionProvider(
+    String key,
+  ) : this._internal(
+          () => ScrollPosition()..key = key,
+          from: scrollPositionProvider,
+          name: r'scrollPositionProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$scrollPositionHash,
+          dependencies: ScrollPositionFamily._dependencies,
+          allTransitiveDependencies:
+              ScrollPositionFamily._allTransitiveDependencies,
+          key: key,
+        );
+
+  ScrollPositionProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.key,
+  }) : super.internal();
+
+  final String key;
+
+  @override
+  double runNotifierBuild(
+    covariant ScrollPosition notifier,
+  ) {
+    return notifier.build(
+      key,
+    );
+  }
+
+  @override
+  Override overrideWith(ScrollPosition Function() create) {
+    return ProviderOverride(
+      origin: this,
+      override: ScrollPositionProvider._internal(
+        () => create()..key = key,
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        key: key,
+      ),
+    );
+  }
+
+  @override
+  NotifierProviderElement<ScrollPosition, double> createElement() {
+    return _ScrollPositionProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ScrollPositionProvider && other.key == key;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, key.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin ScrollPositionRef on NotifierProviderRef<double> {
+  /// The parameter `key` of this provider.
+  String get key;
+}
+
+class _ScrollPositionProviderElement
+    extends NotifierProviderElement<ScrollPosition, double>
+    with ScrollPositionRef {
+  _ScrollPositionProviderElement(super.provider);
+
+  @override
+  String get key => (origin as ScrollPositionProvider).key;
+}
+
+String _$selectedIndexHash() => r'16124a01df53664e40114b0e092ab5f9a219eb95';
+
+/// See also [SelectedIndex].
+@ProviderFor(SelectedIndex)
+final selectedIndexProvider = NotifierProvider<SelectedIndex, int>.internal(
+  SelectedIndex.new,
+  name: r'selectedIndexProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$selectedIndexHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$SelectedIndex = Notifier<int>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

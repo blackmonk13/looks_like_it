@@ -1,7 +1,6 @@
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:looks_like_it/imagehash/example/utils.dart';
-import 'package:looks_like_it/imagehash/imagehash.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 
 class SimilarityIndicator extends StatelessWidget {

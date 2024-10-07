@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -18,7 +19,6 @@ class HomePage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scanDirectory = ref.watch(directoryPickerProvider);
-    final threshold = ref.watch(similarityThresholdProvider);
     final asyncRecentPaths = ref.watch(recentPathsProvider);
     final asyncCompare = ref.watch(comparisonControllerProvider);
 
@@ -46,11 +46,20 @@ class HomePage extends HookConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         scrolledUnderElevation: 0.0,
-        title: true
+        title: false
             ? null
             : Text.rich(
                 TextSpan(
                   children: [
+                    TextSpan(
+                      text: "Processors: ",
+                      children: [
+                        TextSpan(
+                          text: Platform.numberOfProcessors.toString(),
+                        ),
+                      ],
+                    ),
+                    TextSpan(text: "\t" * 5),
                     TextSpan(
                       text: "Breakpoint: ",
                       children: [

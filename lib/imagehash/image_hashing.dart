@@ -29,7 +29,7 @@ class ImageEntry {
   late DateTime lastModified;
 
   static Future<ImageEntry> fromFile(File file) async {
-    final image = await img.decodeImageFile(file.path);
+    final image = await optimizedDecodeImage(file);
 
     if (image == null) {
       throw Exception('Unable to decode image: ${file.path}');
@@ -78,6 +78,44 @@ class ImageSimilarity {
       ..createdAt = DateTime.now();
 
     return imageSimilarity;
+  }
+}
+
+Future<img.Image?> optimizedDecodeImage(File file) async {
+  final raf = await file.open(mode: FileMode.read);
+
+  try {
+    // Read first 8 bytes for file signature detection
+    final headerBytes = await raf.read(8);
+
+    if (headerBytes.length >= 2) {
+      if (headerBytes[0] == 0xFF && headerBytes[1] == 0xD8) {
+        // It's a JPEG
+        await raf.setPosition(0);
+        final bytes = await raf.read(await raf.length());
+        return img.decodeJpg(bytes);
+      } else if (headerBytes.length >= 8 &&
+          headerBytes[0] == 0x89 &&
+          headerBytes[1] == 0x50 &&
+          headerBytes[2] == 0x4E &&
+          headerBytes[3] == 0x47 &&
+          headerBytes[4] == 0x0D &&
+          headerBytes[5] == 0x0A &&
+          headerBytes[6] == 0x1A &&
+          headerBytes[7] == 0x0A) {
+        // It's a PNG
+        await raf.setPosition(0);
+        final bytes = await raf.read(await raf.length());
+        return img.decodePng(bytes);
+      }
+    }
+
+    // Fallback to generic decoder
+    await raf.setPosition(0);
+    final bytes = await raf.read(await raf.length());
+    return img.decodeImage(bytes);
+  } finally {
+    await raf.close();
   }
 }
 
@@ -180,45 +218,15 @@ class AverageHash {
   }
 }
 
-class AdaptiveBatchSizeCalculator {
-  final int minBatchSize;
-  final int maxBatchSize;
-  final int targetProcessingTimeMs;
-
-  int currentBatchSize;
-  int lastProcessingTimeMs = 0;
-
-  AdaptiveBatchSizeCalculator({
-    this.minBatchSize = 10,
-    this.maxBatchSize = 1000,
-    this.targetProcessingTimeMs = 1000,
-    int initialBatchSize = 100,
-  }) : currentBatchSize = initialBatchSize;
-
-  void adjustBatchSize(int processingTimeMs) {
-    lastProcessingTimeMs = processingTimeMs;
-    if (processingTimeMs > targetProcessingTimeMs) {
-      currentBatchSize = max(minBatchSize, currentBatchSize ~/ 2);
-    } else if (processingTimeMs < targetProcessingTimeMs ~/ 2) {
-      currentBatchSize = min(maxBatchSize, currentBatchSize * 2);
-    }
-  }
-}
-
 class ImageHashSystem {
   final Isar isar;
-  final AdaptiveBatchSizeCalculator batchSizeCalculator;
 
   static const List<CollectionSchema<dynamic>> schemas = [
     ImageEntrySchema,
     ImageSimilaritySchema,
   ];
 
-  ImageHashSystem({required this.isar})
-      : batchSizeCalculator = AdaptiveBatchSizeCalculator(
-          maxBatchSize: 300,
-          initialBatchSize: 10,
-        );
+  ImageHashSystem({required this.isar});
 
   Future<void> indexImage(File file) async {
     final entry = await ImageEntry.fromFile(file);
@@ -227,50 +235,18 @@ class ImageHashSystem {
     });
   }
 
-  Future<void> indexImages(List<File> files) async {
-    for (final file in files) {
-      try {
-        await indexImage(file);
-      } catch (e) {
-        // TODO: Notify failure
-        continue;
-      }
-    }
-  }
-
-  Future<void> indexFolder(
-    String folderPath, {
-    bool recursive = false,
-  }) async {
-    final directory = Directory(folderPath);
-    final entities = recursive
-        ? directory.list(
-            recursive: true,
-          )
-        : directory.list();
-    await for (final entity in entities) {
-      if (entity is File && _isImageFile(entity.path)) {
-        try {
-          await indexImage(entity);
-        } catch (e) {
-          // TODO: Notify failure
-          continue;
-        }
-      }
-    }
-  }
-
   Future<void> compareImages(
     List<String> imagePaths, {
     double threshold = 90.0,
   }) async {
+    await clearSimilarities();
     final istopwatch = Stopwatch()..start();
     final entries = await _getOrIndexEntries(imagePaths);
     istopwatch.stop();
     print("processed in ${istopwatch.elapsedMilliseconds / 1000} seconds");
 
     final stopwatch = Stopwatch()..start();
-    await clearSimilarities();
+
     await isar.writeTxn(() async {
       for (int i = 0; i < entries.length; i++) {
         for (int j = i + 1; j < entries.length; j++) {
@@ -308,56 +284,80 @@ class ImageHashSystem {
     return compareImages(paths, threshold: threshold);
   }
 
-  Future<List<ImageEntry>> _getOrIndexEntries(List<String> imagePaths) async {
-    final entries = <ImageEntry>[];
-    final batchSize = batchSizeCalculator.currentBatchSize;
+  Future<List<ImageEntry>> _getOrIndexEntries(
+    List<String> imagePaths,
+  ) async {
+    final int numberOfIsolates = Platform.numberOfProcessors - 1;
+    final chunkSize = (imagePaths.length / numberOfIsolates).ceil();
 
-    int batchCount = 1;
-    for (var i = 0; i < imagePaths.length; i += batchSize) {
-      final stopwatch = Stopwatch()..start();
-      print("Processing Batch #${batchCount}");
-      final end = (i + batchSize < imagePaths.length)
-          ? i + batchSize
-          : imagePaths.length;
-      final batchPaths = imagePaths.sublist(i, end);
-
-      final batch = isar.imageEntrys.where().anyOf(
-            batchPaths,
-            (q, filepath) => q.imagePathEqualTo(filepath),
-          );
-
-      final existingEntries = await batch.findAll();
-      final existingMap = {for (var e in existingEntries) e.imagePath: e};
-
-      await Future.forEach(batchPaths, (filepath) async {
-        final existingEntry = existingMap[filepath];
-        if (existingEntry != null) {
-          final file = File(filepath);
-          final lastModified = await file.lastModified();
-          if (lastModified == existingEntry.lastModified) {
-            entries.add(existingEntry);
-            return;
-          }
-        }
-        try {
-          final newEntry = await ImageEntry.fromFile(File(filepath));
-          await isar.writeTxn(() async {
-            await isar.imageEntrys.put(newEntry);
-          });
-          entries.add(newEntry);
-        } catch (e) {
-          // Handle or log the error if needed
-        }
-      });
-      stopwatch.stop();
-      print(
-          "Batch #${batchCount} processed in ${stopwatch.elapsedMilliseconds / 1000} seconds");
-      batchCount++;
-      // Allow the main thread to process other events
-      await Future.delayed(Duration.zero);
+    final chunks = <List<String>>[];
+    for (var i = 0; i < imagePaths.length; i += chunkSize) {
+      chunks.add(imagePaths.sublist(
+          i,
+          i + chunkSize > imagePaths.length
+              ? imagePaths.length
+              : i + chunkSize));
     }
 
-    return entries;
+    final List<Future<List<ImageEntry>>> futures = [];
+
+    for (final chunk in chunks) {
+      futures.add(_processChunk(chunk));
+    }
+
+    final results = await Future.wait(futures);
+    return results.expand((x) => x).toList();
+  }
+
+  Future<List<ImageEntry>> _processChunk(List<String> chunk) async {
+    final List<ImageEntry> results = [];
+    final existingEntries = await isar.imageEntrys
+        .where()
+        .anyOf(
+          chunk,
+          (q, filepath) => q.imagePathEqualTo(filepath),
+        )
+        .findAll();
+    final existingMap = {for (var e in existingEntries) e.imagePath: e};
+    final existing = chunk.where((e) => existingMap.containsKey(e)).toList();
+    final nonexisting =
+        chunk.where((e) => !existingMap.containsKey(e)).toList();
+
+    for (var filePath in existing) {
+      final existingEntry = existingMap[filePath]!;
+      final file = File(filePath);
+      final lastModified = await file.lastModified();
+      if (lastModified == existingEntry.lastModified) {
+        results.add(existingEntry);
+      }
+    }
+    final port = ReceivePort();
+    await Isolate.spawn(_isolateFunction, [nonexisting, port.sendPort]);
+    final nonExistingResults = await port.first as List<ImageEntry>;
+    await isar.writeTxn(() async {
+      await isar.imageEntrys.putAll(nonExistingResults);
+    });
+
+    results.addAll(nonExistingResults);
+    return results;
+  }
+
+  static void _isolateFunction(List<dynamic> args) async {
+    List<String> paths = args[0] as List<String>;
+    SendPort sendPort = args[1] as SendPort;
+
+    List<ImageEntry> results = [];
+
+    for (final filePath in paths) {
+      try {
+        final entry = await ImageEntry.fromFile(File(filePath));
+        results.add(entry);
+      } catch (e) {
+        print('Error processing $filePath: $e');
+      }
+    }
+
+    Isolate.exit(sendPort, results);
   }
 
   Future<List<String>> _getImagePathsInFolder(

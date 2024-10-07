@@ -7,7 +7,6 @@ import 'package:looks_like_it/models/similar_image.dart';
 import 'package:looks_like_it/providers/common.dart';
 import 'package:looks_like_it/providers/files.dart';
 import 'package:looks_like_it/utils/functions.dart';
-import 'package:looks_like_it/utils/prefs.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:path/path.dart' as p;
 

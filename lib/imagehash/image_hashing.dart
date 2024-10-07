@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
@@ -9,8 +8,8 @@ import 'package:looks_like_it/imagehash/example/providers.dart';
 import 'package:looks_like_it/providers/files.dart';
 import 'package:path/path.dart' as path;
 import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:logger/logger.dart';
 
 part 'image_hashing.g.dart';
 
@@ -220,6 +219,7 @@ class AverageHash {
 
 class ImageHashSystem {
   final Isar isar;
+  final Logger logger = Logger();
 
   static const List<CollectionSchema<dynamic>> schemas = [
     ImageEntrySchema,
@@ -243,7 +243,7 @@ class ImageHashSystem {
     final istopwatch = Stopwatch()..start();
     final entries = await _getOrIndexEntries(imagePaths);
     istopwatch.stop();
-    print("processed in ${istopwatch.elapsedMilliseconds / 1000} seconds");
+    logger.d("processed in ${istopwatch.elapsedMilliseconds / 1000} seconds");
 
     final stopwatch = Stopwatch()..start();
 
@@ -268,7 +268,7 @@ class ImageHashSystem {
       }
     });
     stopwatch.stop();
-    print("compared in ${stopwatch.elapsedMilliseconds / 1000} seconds");
+    logger.d("compared in ${stopwatch.elapsedMilliseconds / 1000} seconds");
   }
 
   Future<void> compareFolderImages(
@@ -343,6 +343,7 @@ class ImageHashSystem {
   }
 
   static void _isolateFunction(List<dynamic> args) async {
+    var logger = Logger();
     List<String> paths = args[0] as List<String>;
     SendPort sendPort = args[1] as SendPort;
 
@@ -353,7 +354,7 @@ class ImageHashSystem {
         final entry = await ImageEntry.fromFile(File(filePath));
         results.add(entry);
       } catch (e) {
-        print('Error processing $filePath: $e');
+        logger.e('Error processing $filePath: $e');
       }
     }
 
@@ -458,10 +459,6 @@ class HashingSystem extends _$HashingSystem {
       isar: isar,
     );
 
-    ref.onDispose(() async {
-      print("Disposing hashing system");
-    });
-
     return system;
   }
 }
@@ -509,11 +506,11 @@ class ComparisonController extends _$ComparisonController {
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      print("running folder comparison");
       await ref.read(hashingSystemProvider).requireValue.compareFolderImages(
-          folderPath,
-          recursive: recursive,
-          threshold: threshold);
+            folderPath,
+            recursive: recursive,
+            threshold: threshold,
+          );
       return ComparisonType.folderImages;
     });
   }

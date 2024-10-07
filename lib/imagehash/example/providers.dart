@@ -1,10 +1,7 @@
 import 'dart:io';
 
 import 'package:isar/isar.dart';
-import 'package:looks_like_it/imagehash/example/utils.dart';
 import 'package:looks_like_it/imagehash/image_hashing.dart';
-import 'package:looks_like_it/providers/files.dart';
-import 'package:looks_like_it/utils/prefs.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

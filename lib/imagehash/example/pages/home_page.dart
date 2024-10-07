@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:layout/layout.dart';
 import 'package:looks_like_it/components/common/error_view.dart';
@@ -47,6 +46,7 @@ class HomePage extends HookConsumerWidget {
       appBar: AppBar(
         scrolledUnderElevation: 0.0,
         title: false
+            // ignore: dead_code
             ? null
             : Text.rich(
                 TextSpan(
@@ -120,7 +120,7 @@ class HomePage extends HookConsumerWidget {
                     ref.invalidate(selectedIndexProvider);
                   },
                   onRecentChanged: (value) async {
-                    final status = await Future.wait(
+                    await Future.wait(
                       value.map(
                         (e) => ref
                             .read(recentPathsProvider.notifier)

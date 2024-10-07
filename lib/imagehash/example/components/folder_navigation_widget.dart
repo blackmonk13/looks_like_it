@@ -86,8 +86,6 @@ class FolderNavigationWidget extends HookConsumerWidget {
       } else {
         List<String> pathParts = path.split(currentPath);
 
-        print("PathParts: ${pathParts.length}");
-
         return BreadcrumbsBuilder(
           isEditing: isEditing,
           boxConstraints: boxConstraints,

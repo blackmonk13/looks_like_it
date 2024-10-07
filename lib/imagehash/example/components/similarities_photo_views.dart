@@ -5,7 +5,6 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:layout/layout.dart';
 import 'package:looks_like_it/components/common/error_view.dart';
 import 'package:looks_like_it/hooks/photo_view.dart';
 import 'package:looks_like_it/imagehash/example/components/similarities_details_view.dart';
@@ -58,7 +57,6 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
         if (controller2.rotation != controller1.rotation) {
           controller2.rotation = controller1.rotation;
         }
-        print("Sync 2 called");
         zoom.value = "${controller1.scale ?? 0}";
       }
 
@@ -72,7 +70,6 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
         if (controller1.rotation != controller2.rotation) {
           controller1.rotation = controller2.rotation;
         }
-        print("Sync 1 called");
         zoom.value = "${controller1.scale ?? 0}";
       }
 
@@ -81,7 +78,6 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
             scaleStateController1.scaleState) {
           scaleStateController2.scaleState = scaleStateController1.scaleState;
         }
-        print("Sync scale 2 called");
         zoom.value = "${controller1.scale ?? 0}";
       }
 
@@ -90,7 +86,6 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
             scaleStateController2.scaleState) {
           scaleStateController1.scaleState = scaleStateController2.scaleState;
         }
-        print("Sync scale 1 called");
         zoom.value = "${controller1.scale ?? 0}";
       }
 
@@ -413,7 +408,9 @@ class DeleteImageBtn extends ConsumerWidget {
         ref
             .read(selectedIndexProvider.notifier)
             .selectNextOrPrevious(itemCount);
-
+        if (!context.mounted) {
+          return;
+        }
         context.showSnackBar(
           message: "${path.basename(image.imagePath)} has been deleted",
         );

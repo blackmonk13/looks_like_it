@@ -4,7 +4,6 @@ import 'package:layout/layout.dart';
 import 'package:looks_like_it/components/common/error_view.dart';
 import 'package:looks_like_it/imagehash/example/components/similarities_list_view.dart';
 import 'package:looks_like_it/imagehash/example/components/similarities_photo_views.dart';
-import 'package:looks_like_it/imagehash/example/providers.dart';
 import 'package:looks_like_it/imagehash/image_hashing.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 
@@ -15,9 +14,6 @@ class SimilaritiesView extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncCount = ref.watch(similaritiesCountProvider);
-    final pathFilters = ref.watch(pathFiltersProvider);
-
-    final selectedIndex = ref.watch(selectedIndexProvider);
 
     return asyncCount.when(
       skipLoadingOnRefresh: false,

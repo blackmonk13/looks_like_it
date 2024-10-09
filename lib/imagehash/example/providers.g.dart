@@ -6,7 +6,7 @@ part of 'providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$isarHash() => r'2f7146697b8526ed8bc34456359f37d90cf8fdfe';
+String _$isarHash() => r'ed1ace58ccfb023a9c707d1f5d8cd28a4204a91e';
 
 /// See also [isar].
 @ProviderFor(isar)
@@ -20,7 +20,7 @@ final isarProvider = FutureProvider<Isar>.internal(
 );
 
 typedef IsarRef = FutureProviderRef<Isar>;
-String _$appStartupHash() => r'4df61a08b2afc4d8cfa280758a9003e4d3727675';
+String _$appStartupHash() => r'5b0c55d95bd5828b52d230f7e4d11fe233abb9e4';
 
 /// See also [appStartup].
 @ProviderFor(appStartup)
@@ -216,21 +216,6 @@ final similaritiesListProvider = AutoDisposeAsyncNotifierProvider<
 );
 
 typedef _$SimilaritiesList = AutoDisposeAsyncNotifier<List<ImageSimilarity>>;
-String _$pathFiltersHash() => r'46d019180cabde850bde26fd7be67d11cd8abaed';
-
-/// See also [PathFilters].
-@ProviderFor(PathFilters)
-final pathFiltersProvider =
-    AutoDisposeNotifierProvider<PathFilters, List<String>>.internal(
-  PathFilters.new,
-  name: r'pathFiltersProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$pathFiltersHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$PathFilters = AutoDisposeNotifier<List<String>>;
 String _$scrollPositionHash() => r'99efa913e59be8488e40567fea7b4da9e301c39d';
 
 abstract class _$ScrollPosition extends BuildlessNotifier<double> {

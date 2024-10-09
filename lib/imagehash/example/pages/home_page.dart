@@ -83,7 +83,10 @@ class HomePage extends HookConsumerWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              await ref.read(hashingSystemProvider).requireValue.clearEntries();
+              await ref
+                  .read(imagesProcessingProvider)
+                  .requireValue
+                  .clearEntries();
             },
             icon: const Icon(
               FluentIcons.database_warning_20_regular,

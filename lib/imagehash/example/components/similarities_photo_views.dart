@@ -5,6 +5,7 @@ import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:layout/layout.dart';
 import 'package:looks_like_it/components/common/error_view.dart';
 import 'package:looks_like_it/hooks/photo_view.dart';
 import 'package:looks_like_it/imagehash/example/components/similarities_details_view.dart';
@@ -13,6 +14,12 @@ import 'package:looks_like_it/imagehash/image_hashing.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:path/path.dart' as path;
+
+enum ImageViewMode {
+  sideBySide,
+  splitView,
+  diffView,
+}
 
 class SimilaritiesPhotoViews extends HookConsumerWidget {
   const SimilaritiesPhotoViews({
@@ -34,14 +41,14 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
       limit: pageSize,
       offset: offset,
     ));
-    final pathFilters = ref.watch(pathFiltersProvider);
 
     final controller1 = usePhotoViewController();
     final controller2 = usePhotoViewController();
     final scaleStateController1 = usePhotoViewScaleStateController();
     final scaleStateController2 = usePhotoViewScaleStateController();
 
-    final splitView = useState(false);
+    final viewMode = useState<ImageViewMode>(ImageViewMode.sideBySide);
+
     final splitPosition = useState<double>(.5);
 
     final zoom = useState("");
@@ -143,15 +150,8 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
                       image: image1,
                       itemCount: itemCount,
                     ),
-                    ToolbarBtn(
-                      isSelected: pathFilters.contains(image1.imagePath),
-                      icon: FluentIcons.filter_24_regular,
-                      selectedIcon: FluentIcons.filter_dismiss_24_regular,
-                      onTap: () {
-                        ref
-                            .read(pathFiltersProvider.notifier)
-                            .toggleFilter(image1.imagePath);
-                      },
+                    FilterImageBtn(
+                      image: image1,
                     ),
                     const Spacer(),
                     ToolbarBtn(
@@ -197,21 +197,38 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
                       icon: FluentIcons.arrow_rotate_clockwise_24_regular,
                     ),
                     ToolbarBtn(
-                      isSelected: splitView.value,
+                      isSelected: viewMode.value == ImageViewMode.splitView,
                       selectedIcon: FluentIcons.image_split_24_filled,
                       icon: FluentIcons.image_split_24_regular,
-                      onTap: () => splitView.value = !splitView.value,
+                      onTap: () {
+                        switch (viewMode.value) {
+                          case ImageViewMode.splitView:
+                            viewMode.value = ImageViewMode.sideBySide;
+                            break;
+                          default:
+                            viewMode.value = ImageViewMode.splitView;
+                            break;
+                        }
+                      },
+                    ),
+                    ToolbarBtn(
+                      isSelected: viewMode.value == ImageViewMode.diffView,
+                      selectedIcon: FluentIcons.image_multiple_24_filled,
+                      icon: FluentIcons.image_multiple_24_regular,
+                      onTap: () {
+                        switch (viewMode.value) {
+                          case ImageViewMode.diffView:
+                            viewMode.value = ImageViewMode.sideBySide;
+                            break;
+                          default:
+                            viewMode.value = ImageViewMode.diffView;
+                            break;
+                        }
+                      },
                     ),
                     const Spacer(),
-                    ToolbarBtn(
-                      isSelected: pathFilters.contains(image2.imagePath),
-                      icon: FluentIcons.filter_24_regular,
-                      selectedIcon: FluentIcons.filter_dismiss_24_regular,
-                      onTap: () {
-                        ref
-                            .read(pathFiltersProvider.notifier)
-                            .toggleFilter(image2.imagePath);
-                      },
+                    FilterImageBtn(
+                      image: image2,
                     ),
                     DeleteImageBtn(
                       image: image2,
@@ -245,50 +262,57 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
                 ),
               ),
               Expanded(
-                child: IndexedStack(
-                  index: splitView.value ? 1 : 0,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        Flexible(
-                          child: SimilarPhotoView(
-                            image: image1,
-                            controller: controller1,
-                            scaleStateController: scaleStateController1,
-                          ),
-                        ),
-                        Flexible(
-                          child: SimilarPhotoView(
-                            image: image2,
-                            controller: controller2,
-                            scaleStateController: scaleStateController2,
-                          ),
-                        ),
-                      ],
-                    ),
-                    BeforeAfter(
-                      autofocus: true,
-                      trackWidth: 2.0,
-                      trackColor: context.colorScheme.outlineVariant,
-                      thumbColor: context.colorScheme.outlineVariant,
-                      value: splitPosition.value,
-                      onValueChanged: (value) {
-                        splitPosition.value = value;
-                      },
-                      before: SimilarPhotoView(
-                        image: image1,
+                child: (() {
+                  switch (viewMode.value) {
+                    case ImageViewMode.diffView:
+                      return DifferenceImageViewer(
+                        similarity: item,
                         controller: controller1,
                         scaleStateController: scaleStateController1,
-                      ),
-                      after: SimilarPhotoView(
-                        image: image2,
-                        controller: controller2,
-                        scaleStateController: scaleStateController2,
-                      ),
-                    ),
-                  ],
-                ),
+                      );
+                    case ImageViewMode.splitView:
+                      return BeforeAfter(
+                        autofocus: true,
+                        trackWidth: 2.0,
+                        trackColor: context.colorScheme.outlineVariant,
+                        thumbColor: context.colorScheme.outlineVariant,
+                        value: splitPosition.value,
+                        onValueChanged: (value) {
+                          splitPosition.value = value;
+                        },
+                        before: SimilarPhotoView(
+                          image: image1,
+                          controller: controller1,
+                          scaleStateController: scaleStateController1,
+                        ),
+                        after: SimilarPhotoView(
+                          image: image2,
+                          controller: controller2,
+                          scaleStateController: scaleStateController2,
+                        ),
+                      );
+                    default:
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          Flexible(
+                            child: SimilarPhotoView(
+                              image: image1,
+                              controller: controller1,
+                              scaleStateController: scaleStateController1,
+                            ),
+                          ),
+                          Flexible(
+                            child: SimilarPhotoView(
+                              image: image2,
+                              controller: controller2,
+                              scaleStateController: scaleStateController2,
+                            ),
+                          ),
+                        ],
+                      );
+                  }
+                })(),
               ),
               SimilaritiesDetailsView(
                 item: item,
@@ -306,6 +330,77 @@ class SimilaritiesPhotoViews extends HookConsumerWidget {
           return const SizedBox.shrink();
         },
       ),
+    );
+  }
+}
+
+class DifferenceImageViewer extends HookConsumerWidget {
+  const DifferenceImageViewer({
+    super.key,
+    required this.similarity,
+    required this.controller,
+    required this.scaleStateController,
+  });
+  final ImageSimilarity similarity;
+  final PhotoViewController controller;
+  final PhotoViewScaleStateController scaleStateController;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncDiffImage = ref.watch(differenceImageProvider(similarity));
+    return asyncDiffImage.when(
+      data: (data) {
+        if (data == null) {
+          return const Center(
+            child: Icon(
+              FluentIcons.image_off_24_filled,
+              size: 24 * 3,
+            ),
+          );
+        }
+
+        return ImageView(
+          image: MemoryImage(data),
+          controller: controller,
+          scaleStateController: scaleStateController,
+        );
+      },
+      error: (error, stackTrace) {
+        return AsyncErrorView(
+          error: error,
+          stackTrace: stackTrace,
+        );
+      },
+      loading: () {
+        return Center(
+          child: SizedBox(
+            width: context.layout.width * .5,
+            child: LinearProgressIndicator(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class FilterImageBtn extends ConsumerWidget {
+  const FilterImageBtn({
+    super.key,
+    required this.image,
+  });
+  final ImageEntry image;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pathFilters = ref.watch(pathFiltersProvider);
+    return ToolbarBtn(
+      isSelected: pathFilters.contains(image.imagePath),
+      icon: FluentIcons.filter_24_regular,
+      selectedIcon: FluentIcons.filter_dismiss_24_regular,
+      onTap: () {
+        ref.read(pathFiltersProvider.notifier).toggleFilter(image.imagePath);
+      },
     );
   }
 }
@@ -464,6 +559,28 @@ class SimilarPhotoView extends HookConsumerWidget {
   final PhotoViewScaleStateController scaleStateController;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return ImageView(
+      image: FileImage(
+        File(image.imagePath),
+      ),
+      controller: controller,
+      scaleStateController: scaleStateController,
+    );
+  }
+}
+
+class ImageView extends HookConsumerWidget {
+  const ImageView({
+    super.key,
+    required this.image,
+    required this.controller,
+    required this.scaleStateController,
+  });
+  final ImageProvider<Object>? image;
+  final PhotoViewController controller;
+  final PhotoViewScaleStateController scaleStateController;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       clipBehavior: Clip.hardEdge,
       margin: const EdgeInsets.all(16.0),
@@ -475,9 +592,7 @@ class SimilarPhotoView extends HookConsumerWidget {
         controller: controller,
         scaleStateController: scaleStateController,
         enablePanAlways: true,
-        imageProvider: FileImage(
-          File(image.imagePath),
-        ),
+        imageProvider: image,
         filterQuality: FilterQuality.high,
         backgroundDecoration: BoxDecoration(
           color: context.colorScheme.surfaceContainer.withOpacity(.8),

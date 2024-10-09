@@ -1792,7 +1792,7 @@ extension ImageSimilarityQueryProperty
 // **************************************************************************
 
 String _$similaritiesWatcherHash() =>
-    r'dfb25d4876fd6d599c195abee05f69fb089cd151';
+    r'1a76dd8dd01afffe89f12a655e050be3b867d87a';
 
 /// See also [similaritiesWatcher].
 @ProviderFor(similaritiesWatcher)
@@ -1807,7 +1807,7 @@ final similaritiesWatcherProvider = AutoDisposeStreamProvider<void>.internal(
 );
 
 typedef SimilaritiesWatcherRef = AutoDisposeStreamProviderRef<void>;
-String _$similaritiesCountHash() => r'fab18ad6ee13035cf6e652def889e90e67f7deb7';
+String _$similaritiesCountHash() => r'dd0e6b1260083c376bd39ecee23f920a3e883be7';
 
 /// See also [similaritiesCount].
 @ProviderFor(similaritiesCount)
@@ -1822,40 +1822,7 @@ final similaritiesCountProvider = AutoDisposeFutureProvider<int>.internal(
 );
 
 typedef SimilaritiesCountRef = AutoDisposeFutureProviderRef<int>;
-String _$hashingSystemHash() => r'54a12a178b500eab30fd78935a466c583fc9bd5b';
-
-/// See also [HashingSystem].
-@ProviderFor(HashingSystem)
-final hashingSystemProvider =
-    AsyncNotifierProvider<HashingSystem, ImageHashSystem>.internal(
-  HashingSystem.new,
-  name: r'hashingSystemProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$hashingSystemHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$HashingSystem = AsyncNotifier<ImageHashSystem>;
-String _$comparisonControllerHash() =>
-    r'e2893d5389e26ac20016188b152116fe4e0e78e2';
-
-/// See also [ComparisonController].
-@ProviderFor(ComparisonController)
-final comparisonControllerProvider =
-    AsyncNotifierProvider<ComparisonController, ComparisonType?>.internal(
-  ComparisonController.new,
-  name: r'comparisonControllerProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$comparisonControllerHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$ComparisonController = AsyncNotifier<ComparisonType?>;
-String _$similaritiesQueryHash() => r'4ef53c878fbd34d70b0c931f63498c1bd0b99b9f';
+String _$differenceImageHash() => r'06a147d910f4bc1dbff4006bd65befc6d47a9a17';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -1877,6 +1844,183 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+/// See also [differenceImage].
+@ProviderFor(differenceImage)
+const differenceImageProvider = DifferenceImageFamily();
+
+/// See also [differenceImage].
+class DifferenceImageFamily extends Family<AsyncValue<Uint8List?>> {
+  /// See also [differenceImage].
+  const DifferenceImageFamily();
+
+  /// See also [differenceImage].
+  DifferenceImageProvider call(
+    ImageSimilarity similarity,
+  ) {
+    return DifferenceImageProvider(
+      similarity,
+    );
+  }
+
+  @override
+  DifferenceImageProvider getProviderOverride(
+    covariant DifferenceImageProvider provider,
+  ) {
+    return call(
+      provider.similarity,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'differenceImageProvider';
+}
+
+/// See also [differenceImage].
+class DifferenceImageProvider extends AutoDisposeFutureProvider<Uint8List?> {
+  /// See also [differenceImage].
+  DifferenceImageProvider(
+    ImageSimilarity similarity,
+  ) : this._internal(
+          (ref) => differenceImage(
+            ref as DifferenceImageRef,
+            similarity,
+          ),
+          from: differenceImageProvider,
+          name: r'differenceImageProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$differenceImageHash,
+          dependencies: DifferenceImageFamily._dependencies,
+          allTransitiveDependencies:
+              DifferenceImageFamily._allTransitiveDependencies,
+          similarity: similarity,
+        );
+
+  DifferenceImageProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.similarity,
+  }) : super.internal();
+
+  final ImageSimilarity similarity;
+
+  @override
+  Override overrideWith(
+    FutureOr<Uint8List?> Function(DifferenceImageRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: DifferenceImageProvider._internal(
+        (ref) => create(ref as DifferenceImageRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        similarity: similarity,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<Uint8List?> createElement() {
+    return _DifferenceImageProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DifferenceImageProvider && other.similarity == similarity;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, similarity.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+mixin DifferenceImageRef on AutoDisposeFutureProviderRef<Uint8List?> {
+  /// The parameter `similarity` of this provider.
+  ImageSimilarity get similarity;
+}
+
+class _DifferenceImageProviderElement
+    extends AutoDisposeFutureProviderElement<Uint8List?>
+    with DifferenceImageRef {
+  _DifferenceImageProviderElement(super.provider);
+
+  @override
+  ImageSimilarity get similarity =>
+      (origin as DifferenceImageProvider).similarity;
+}
+
+String _$imagesProcessingHash() => r'bce200ab8e6183bdbb4902066cf0be4ae803668c';
+
+/// See also [ImagesProcessing].
+@ProviderFor(ImagesProcessing)
+final imagesProcessingProvider =
+    AsyncNotifierProvider<ImagesProcessing, ImagesProcessor>.internal(
+  ImagesProcessing.new,
+  name: r'imagesProcessingProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$imagesProcessingHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ImagesProcessing = AsyncNotifier<ImagesProcessor>;
+String _$comparisonControllerHash() =>
+    r'5b540ec7d830e1fba6f58a751eaef78e503fa460';
+
+/// See also [ComparisonController].
+@ProviderFor(ComparisonController)
+final comparisonControllerProvider =
+    AsyncNotifierProvider<ComparisonController, ComparisonType?>.internal(
+  ComparisonController.new,
+  name: r'comparisonControllerProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$comparisonControllerHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ComparisonController = AsyncNotifier<ComparisonType?>;
+String _$pathFiltersHash() => r'a72503c52909b6cd22d9234ffee6a7ffe2d69681';
+
+/// See also [PathFilters].
+@ProviderFor(PathFilters)
+final pathFiltersProvider = NotifierProvider<PathFilters, Set<String>>.internal(
+  PathFilters.new,
+  name: r'pathFiltersProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$pathFiltersHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$PathFilters = Notifier<Set<String>>;
+String _$similaritiesQueryHash() => r'927c1474dd2ed4ddcf873024eaa7b276970f7b4f';
 
 abstract class _$SimilaritiesQuery
     extends BuildlessAutoDisposeAsyncNotifier<List<ImageSimilarity>> {
@@ -2045,7 +2189,7 @@ class _SimilaritiesQueryProviderElement
   int? get offset => (origin as SimilaritiesQueryProvider).offset;
 }
 
-String _$fileOpsControllerHash() => r'e9f72a7d04411be05931c93a922ed8b9902f2be5';
+String _$fileOpsControllerHash() => r'173f7e4c2347566fc04ae12bf091a5aeffbd48e8';
 
 /// See also [FileOpsController].
 @ProviderFor(FileOpsController)

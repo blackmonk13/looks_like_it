@@ -44,7 +44,7 @@ class SimilaritiesList extends _$SimilaritiesList {
 FutureOr<Isar> isar(IsarRef ref) async {
   final dir = await getApplicationSupportDirectory();
   final isar = await Isar.open(
-    [...ImageHashSystem.schemas],
+    [...ImagesProcessor.schemas],
     directory: dir.path,
     inspector: false,
   );
@@ -56,12 +56,12 @@ FutureOr<Isar> isar(IsarRef ref) async {
 Future<void> appStartup(AppStartupRef ref) async {
   ref.onDispose(() {
     // ensure we invalidate all the providers we depend on
-    ref.invalidate(hashingSystemProvider);
+    ref.invalidate(imagesProcessingProvider);
     ref.invalidate(isarProvider);
   });
   // all asynchronous app initialization code should belong here:
   await ref.watch(isarProvider.future);
-  await ref.watch(hashingSystemProvider.future);
+  await ref.watch(imagesProcessingProvider.future);
 }
 
 @riverpod
@@ -76,24 +76,7 @@ Stream<List<String>> listFolders(ListFoldersRef ref, String folderPath) async* {
   }
 }
 
-@riverpod
-class PathFilters extends _$PathFilters {
-  @override
-  List<String> build() {
-    return [];
-  }
 
-  void toggleFilter(String value) {
-    final currentFilters = state;
-    if (currentFilters.contains(value)) {
-      currentFilters.remove(value);
-    } else {
-      currentFilters.add(value);
-    }
-
-    state = currentFilters;
-  }
-}
 
 @Riverpod(keepAlive: true)
 class ScrollPosition extends _$ScrollPosition {

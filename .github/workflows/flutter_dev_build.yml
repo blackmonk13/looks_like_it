@@ -68,7 +68,7 @@ jobs:
             cd
           else
             flutter build windows --release
-            powershell Compress-Archive -Path "build/windows/runner/x64/Release/*" -DestinationPath "build/windows/runner/x64/windows-release.zip"
+            powershell Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "build/windows/x64/runner/windows-release.zip"
           fi
 
       - name: Upload a Build Artifact
@@ -76,7 +76,7 @@ jobs:
         with:
           name: ${{ matrix.os == 'ubuntu-latest' && 'linux-release.zip' || 'windows-release.zip' }}
           path: |
-            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/runner/x64/windows-release.zip' }}
+            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/x64/runner/windows-release.zip' }}
 
   release:
     needs: build
@@ -95,7 +95,7 @@ jobs:
         uses: actions/download-artifact@v2.0.10
         with:
           name: windows-release.zip
-          path: build/windows/runner/x64/
+          path: build/windows/x64/runner/
 
       - name: Create Tag
         run: |
@@ -109,7 +109,7 @@ jobs:
         with:
           files: |
             build/linux/x64/release/linux-release.zip
-            build/windows/runner/x64/windows-release.zip
+            build/windows/x64/runner/windows-release.zip
           tag_name: v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}-alpha
           make_latest: false
 

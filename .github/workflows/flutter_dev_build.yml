@@ -1,0 +1,101 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Flutter Build
+
+on:
+  push:
+    branches: ["dev"]
+  pull_request:
+    branches: ["dev"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4.2.1
+        with:
+          distribution: "temurin" # See 'Supported distributions' for available options
+          java-version: "17"
+
+      - name: Flutter action
+        # You may pin to the exact commit or the version.
+        # uses: subosito/flutter-action@1c5eb12d812966ca84680edc38353a0851c8fd56
+        uses: subosito/flutter-action@v2.14.0
+        with:
+          # The Flutter version to make available on the path
+          flutter-version: # optional, default is any
+          # The Flutter build release channel
+          channel: # optional, default is stable
+          # Cache the Flutter SDK
+          cache: # optional, default is false
+          # Identifier for the Flutter SDK cache
+          cache-key: # optional, default is flutter-:os:-:channel:-:version:-:arch:-:hash:
+          # Identifier for the Dart .pub-cache cache
+          pub-cache-key: # optional, default is flutter-pub:os:-:channel:-:version:-:arch:-:hash:
+          # Flutter SDK cache path
+          cache-path: # optional, default is ${{ runner.tool_cache }}/flutter/:channel:-:version:-:arch:
+          # Flutter pub cache path
+          pub-cache-path: # optional, default is default
+          # The architecture of Flutter SDK executable (x64 or arm64)
+          architecture: # optional, default is ${{ runner.arch }}
+
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Extract version and build number
+        id: extract_version
+        run: |
+          version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
+          build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
+          echo "VERSION=${version}" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${build_number}" >> $GITHUB_ENV
+
+      - name: Increment build number and update pubspec.yaml
+        run: |
+          new_build_number=$((${BUILD_NUMBER} + 1))
+          sed -i "s/version: ${VERSION}+${BUILD_NUMBER}/version: ${VERSION}+${new_build_number}/" pubspec.yaml
+          echo "NEW_BUILD_NUMBER=${new_build_number}" >> $GITHUB_ENV
+
+      - name: Commit updated pubspec.yaml
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "Increment build number to ${NEW_BUILD_NUMBER}"
+          git push
+
+      - name: Build Linux
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build libgtk-3-dev
+          flutter build linux --release
+          zip -r build/linux/x64/release/bundle/linux-release.zip build/linux/x64/release/bundle/looks_like_it
+      
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: linux-release.zip
+          path: build/linux/x64/release/bundle/linux-release.zip
+      
+      - name: Create Tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }} -m "Release v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}"
+          git push origin v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}
+        
+      - name: GH Release
+        uses: softprops/action-gh-release@v2.0.5
+        with:
+          files: build/linux/x64/release/bundle/linux-release.zip
+          tag_name: v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}
+          make_latest: true

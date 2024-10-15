@@ -7,8 +7,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:layout/layout.dart';
 import 'package:looks_like_it/hooks/undo_history.dart';
-import 'package:looks_like_it/imagehash/example/components/similarity_picker.dart';
-import 'package:looks_like_it/imagehash/example/providers.dart';
+import 'package:looks_like_it/components/similarity_picker.dart';
+import 'package:looks_like_it/providers/common.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:path/path.dart' as path;
 
@@ -125,6 +125,15 @@ class FolderNavigationWidget extends HookConsumerWidget {
             //   onTap: () {/* Implement forward navigation */},
             // ),
             PopupMenuButton<String>(
+              // style: const ButtonStyle(
+              //   visualDensity: VisualDensity.compact,
+              //   minimumSize: WidgetStatePropertyAll(Size.fromWidth(24)),
+              //   maximumSize: WidgetStatePropertyAll(Size.fromWidth(28)),
+              //   // padding: WidgetStatePropertyAll(
+              //   //   EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+              //   // ),
+              // ),
+              iconSize: 20,
               position: PopupMenuPosition.under,
               tooltip: "History",
               padding: const EdgeInsets.symmetric(
@@ -132,8 +141,7 @@ class FolderNavigationWidget extends HookConsumerWidget {
                 horizontal: 8.0,
               ),
               icon: const Icon(
-                FluentIcons.history_24_regular,
-                size: 20,
+                FluentIcons.history_20_regular,
               ),
               onSelected: (value) {
                 navigateTo(value);
@@ -150,19 +158,18 @@ class FolderNavigationWidget extends HookConsumerWidget {
                 }).toList();
               },
             ),
-            InkWell(
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-                child: Icon(
-                  FluentIcons.arrow_up_24_regular,
+            if (pathController.text.isNotEmpty &&
+                Directory(pathController.text).parent.existsSync())
+              IconButton(
+                icon: const Icon(
+                  FluentIcons.arrow_up_20_regular,
                   size: 20,
                 ),
+                onPressed: () {
+                  final parentPath = path.dirname(currentPath);
+                  navigateTo(parentPath);
+                },
               ),
-              onTap: () {
-                final parentPath = path.dirname(currentPath);
-                navigateTo(parentPath);
-              },
-            ),
           ],
         ),
         const SizedBox(width: 8),
@@ -174,8 +181,8 @@ class FolderNavigationWidget extends HookConsumerWidget {
           RefreshBtn(
             onRefresh: onRefresh,
           ),
-        InkWell(
-          onTap: () async {
+        IconButton(
+          onPressed: () async {
             String? folderPath = await FilePicker.platform.getDirectoryPath();
 
             if (folderPath == null) {
@@ -184,13 +191,9 @@ class FolderNavigationWidget extends HookConsumerWidget {
             }
             navigateTo(folderPath);
           },
-          child: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 2.0, horizontal: 8.0),
-            child: Center(
-              child: Icon(
-                FluentIcons.folder_24_regular,
-              ),
-            ),
+          icon: const Icon(
+            FluentIcons.folder_20_regular,
+            size: 20,
           ),
         ),
       ],
@@ -208,11 +211,12 @@ class RefreshBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onRefresh,
-      child: const Icon(
-        FluentIcons.arrow_clockwise_16_regular,
-        size: 16,
+    return IconButton(
+      tooltip: "Refresh",
+      onPressed: onRefresh,
+      icon: const Icon(
+        FluentIcons.arrow_clockwise_20_regular,
+        size: 20,
       ),
     );
   }
@@ -273,8 +277,17 @@ class BreadcrumbsBuilder extends HookConsumerWidget {
               ? 3
               : 4,
     );
-    final hiddenParts = pathParts.sublist(0, pathParts.length - visibleCount);
-    final visibleParts = pathParts.sublist(pathParts.length - visibleCount);
+
+    if (pathParts.length <= visibleCount) {
+      return [];
+    }
+
+    final hiddenParts = pathParts.length <= visibleCount
+        ? <String>[]
+        : pathParts.sublist(0, pathParts.length - visibleCount);
+    final visibleParts = pathParts.length <= visibleCount
+        ? pathParts
+        : pathParts.sublist(pathParts.length - visibleCount);
 
     return [
       if (hiddenParts.isNotEmpty) _buildHiddenPartsButton(context, hiddenParts),

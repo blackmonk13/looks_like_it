@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:layout/layout.dart';
-import 'package:looks_like_it/imagehash/example/providers.dart';
-import 'package:looks_like_it/imagehash/example/utils.dart';
+import 'package:looks_like_it/imagehash/image_hashing.dart';
+import 'package:looks_like_it/providers/common.dart';
+import 'package:looks_like_it/utils/utils.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 
 class SimilarityPicker extends HookConsumerWidget {
@@ -36,7 +37,7 @@ class SimilarityPicker extends HookConsumerWidget {
         ref.invalidate(selectedIndexProvider);
       },
       icon: SizedBox.square(
-        dimension: 20,
+        dimension: 48,
         child: Stack(
           fit: StackFit.expand,
           alignment: AlignmentDirectional.center,
@@ -44,13 +45,15 @@ class SimilarityPicker extends HookConsumerWidget {
             Positioned.fill(
               child: Center(
                 child: Text(
-                  similarity.round().toString(),
+                  "${similarity.round()}%",
                   style: textStyle?.copyWith(
-                      fontSize: textStyle.fontSize == null
-                          ? null
-                          : textStyle.fontSize! * .8,
-                      color: colorForPercentage(similarity),
-                      fontWeight: FontWeight.w800),
+                    fontSize: textStyle.fontSize == null
+                        ? null
+                        : textStyle.fontSize! * 1.2,
+                    // color: colorForPercentage(similarity),
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 1,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -58,7 +61,7 @@ class SimilarityPicker extends HookConsumerWidget {
             Positioned.fill(
               child: CircularProgressIndicator(
                 value: similarity / 100,
-                strokeWidth: 2.0,
+                strokeWidth: 4.0,
                 strokeCap: StrokeCap.round,
                 valueColor: AlwaysStoppedAnimation(
                   colorForPercentage(similarity),
@@ -90,7 +93,7 @@ class SimilaritySliderDialog extends HookConsumerWidget {
         side: BorderSide(
           color: context.colorScheme.surfaceContainerHigh,
         ),
-        borderRadius: BorderRadius.circular(20.0),
+        borderRadius: BorderRadius.circular(5.0),
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(
@@ -104,6 +107,13 @@ class SimilaritySliderDialog extends HookConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              title: Text(
+                "Similarity",
+                style: context.textTheme.headlineSmall,
+              ),
+              trailing: Text("${similarityRatio.value.round()}%"),
+            ),
             Slider(
               value: similarityRatio.value,
               min: 1.0,

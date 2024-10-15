@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -6,6 +8,7 @@ import 'package:looks_like_it/imagehash/image_hashing.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:looks_like_it/utils/functions.dart';
 import 'package:path/path.dart' as path;
+import 'package:url_launcher/url_launcher.dart';
 
 class SimilaritiesDetailsView extends HookConsumerWidget {
   const SimilaritiesDetailsView({
@@ -24,6 +27,7 @@ class SimilaritiesDetailsView extends HookConsumerWidget {
 
     return ExpansionTile(
       // controller: controller,
+      showTrailingIcon: false,
       trailing: Icon(
         expanded.value
             ? FluentIcons.chevron_circle_down_20_regular
@@ -49,13 +53,21 @@ class SimilaritiesDetailsView extends HookConsumerWidget {
               data: image1,
             ),
           ),
-          VerticalDivider(
-            color: context.colorScheme.outline,
+          const SizedBox(
+            height: 40.0,
+            width: 16.0,
+            // child: VerticalDivider(
+            //   color: context.colorScheme.outline,
+            //   thickness: .5,
+            // ),
           ),
           Expanded(
-            child: CollapsedMetaTitle(
-              expanded: expanded,
-              data: image2,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: CollapsedMetaTitle(
+                expanded: expanded,
+                data: image2,
+              ),
             ),
           ),
         ],
@@ -135,13 +147,13 @@ class CollapsedMetaTitle extends StatelessWidget {
                 ),
               ],
             ),
-            TextSpan(text: "\t" * 5),
-            TextSpan(
-              children: [
-                TextSpan(text: data!.bitDepth.toString()),
-                const TextSpan(text: " bit"),
-              ],
-            ),
+            // TextSpan(text: "\t" * 5),
+            // TextSpan(
+            //   children: [
+            //     TextSpan(text: data!.bitDepth.toString()),
+            //     const TextSpan(text: " bit"),
+            //   ],
+            // ),
             if (!expanded.value) ...[
               const TextSpan(text: "\n"),
               TextSpan(
@@ -189,10 +201,10 @@ class AsyncMetadataView extends HookConsumerWidget {
             image!.height.toString(),
           ],
         ),
-        SimilarityDetailsTile(
-          title: "Bit Depth",
-          details: [image!.bitDepth.toString(), " bit"],
-        ),
+        // SimilarityDetailsTile(
+        //   title: "Bit Depth",
+        //   details: [image!.bitDepth.toString(), " bit"],
+        // ),
         SimilarityDetailsTile(
           title: "Size",
           details: [
@@ -204,6 +216,19 @@ class AsyncMetadataView extends HookConsumerWidget {
         SimilarityDetailsTile(
           title: "File Path",
           details: [image!.imagePath],
+          onTap: () async {
+            final Uri uri = Uri.file(image!.imagePath);
+
+            if (!File(uri.toFilePath()).existsSync()) {
+              context.showErrorSnackBar(
+                message: '$uri does not exist!',
+              );
+            }
+            if (!await launchUrl(uri)) {
+              if (!context.mounted) return;
+              context.showErrorSnackBar(message: 'Could not launch $uri');
+            }
+          },
         ),
       ],
     );
@@ -215,14 +240,18 @@ class SimilarityDetailsTile extends HookConsumerWidget {
     super.key,
     required this.title,
     required this.details,
+    this.onTap,
   });
   final String title;
   final List<String> details;
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textStyle = context.textTheme.labelSmall;
     return ListTile(
       dense: true,
+      onTap: onTap,
       title: Text(
         title,
         style: textStyle?.copyWith(

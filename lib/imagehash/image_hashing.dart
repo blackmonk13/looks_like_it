@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
-import 'package:looks_like_it/imagehash/example/providers.dart';
+import 'package:looks_like_it/providers/common.dart';
 import 'package:looks_like_it/providers/files.dart';
 import 'package:path/path.dart' as path;
 import 'package:isar/isar.dart';
@@ -392,12 +392,7 @@ img.Image createDifferenceImage(img.Image image1, img.Image image2) {
     // final b = (color1.b - color2.b).abs();
     // final a = (color1.a - color2.a).abs();
 
-    final isSame = [
-      pixel1.r.compareTo(pixel2.r) == 0,
-      pixel1.g.compareTo(pixel2.g) == 0,
-      pixel1.b.compareTo(pixel2.b) == 0,
-      pixel1.a.compareTo(pixel2.a) == 0,
-    ].every((e) => e == true);
+    final isSame = comparePixelSim(pixel1, pixel2);
     final r = isSame ? 0 : 255;
     final g = isSame ? 255 : 0;
     // Set the pixel in the difference image
@@ -409,6 +404,19 @@ img.Image createDifferenceImage(img.Image image1, img.Image image2) {
   }
 
   return differenceImage;
+}
+
+bool comparePixelSim(img.Pixel pixel1, img.Pixel pixel2) {
+  try {
+    return [
+      pixel1.r.compareTo(pixel2.r) == 0,
+      pixel1.g.compareTo(pixel2.g) == 0,
+      pixel1.b.compareTo(pixel2.b) == 0,
+      pixel1.a.compareTo(pixel2.a) == 0,
+    ].every((e) => e == true);
+  } on RangeError {
+    return false;
+  }
 }
 
 class ImagesProcessor {
@@ -660,7 +668,7 @@ class ImagesProcessor {
     }
 
     final differenceImage = createDifferenceImage(image1, image2);
-    
+
     return img.encodePng(differenceImage);
   }
 }
@@ -828,4 +836,16 @@ FutureOr<Uint8List?> differenceImage(
         image1,
         image2,
       );
+}
+
+@Riverpod(keepAlive: true)
+class SimilarityThreshold extends _$SimilarityThreshold {
+  @override
+  double build() {
+    return 90.0;
+  }
+
+  void setThreshold(double threshold) {
+    state = threshold;
+  }
 }

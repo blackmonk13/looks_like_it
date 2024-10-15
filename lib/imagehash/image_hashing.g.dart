@@ -2205,5 +2205,22 @@ final fileOpsControllerProvider =
 );
 
 typedef _$FileOpsController = AutoDisposeAsyncNotifier<void>;
+String _$similarityThresholdHash() =>
+    r'83ccb4792b207a7783018538fc24246d230da49a';
+
+/// See also [SimilarityThreshold].
+@ProviderFor(SimilarityThreshold)
+final similarityThresholdProvider =
+    NotifierProvider<SimilarityThreshold, double>.internal(
+  SimilarityThreshold.new,
+  name: r'similarityThresholdProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$similarityThresholdHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$SimilarityThreshold = Notifier<double>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

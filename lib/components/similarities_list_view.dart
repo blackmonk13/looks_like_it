@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:layout/layout.dart';
-import 'package:looks_like_it/imagehash/example/components/similarity_list_tile.dart';
-import 'package:looks_like_it/imagehash/example/providers.dart';
+import 'package:looks_like_it/components/similarity_list_tile.dart';
 import 'package:looks_like_it/imagehash/image_hashing.dart';
+import 'package:looks_like_it/providers/common.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 
 class SimilaritiesListView extends HookConsumerWidget {
@@ -64,49 +64,33 @@ class SimilaritiesListView extends HookConsumerWidget {
       },
       child: Focus(
         autofocus: true,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8.0,
-                horizontal: 16.0,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Text(
-                    "${itemCount.toString()} Pairs",
-                    style: textStyle?.copyWith(
-                      color: textStyle.color?.withOpacity(.4),
-                    ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: CustomScrollView(
+            controller: scrollController,
+            slivers: <Widget>[
+              SliverAppBar(
+                backgroundColor: context.colorScheme.surface,
+                scrolledUnderElevation: 0,
+                primary: false,
+                pinned: true,
+                title: Text(
+                  "${itemCount.toString()} Pairs",
+                  style: textStyle?.copyWith(
+                    color: textStyle.color?.withOpacity(.4),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    iconSize: 20,
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return const FiltersDialog();
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      FluentIcons.filter_24_regular,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const Divider(
-              height: .5,
-            ),
-            Expanded(
-              child: ListView.separated(
-                controller: scrollController,
+              SliverList.separated(
                 itemCount: itemCount,
                 separatorBuilder: (BuildContext context, int index) {
-                  return const Divider(
+                  return Divider(
                     thickness: .5,
+                    color: selectedIndex == index
+                        ? context.colorScheme.primary
+                        : context.colorScheme.outline.withOpacity(.5),
+                    indent: 60,
+                    endIndent: 60,
                   );
                 },
                 itemBuilder: (BuildContext context, int index) {
@@ -121,28 +105,47 @@ class SimilaritiesListView extends HookConsumerWidget {
                   return asyncSimilarities.when(
                     data: (data) {
                       final item = data.elementAt(indexInPage);
-                      return SimilarityListTile(
-                        key: ValueKey(item),
-                        selected: selectedIndex == index,
-                        item: item,
-                        onTap: () {
-                          ref
-                              .read(selectedIndexProvider.notifier)
-                              .select(index);
-                        },
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: SimilarityListTile(
+                              key: ValueKey(item),
+                              selected: selectedIndex == index,
+                              item: item,
+                              onTap: () {
+                                ref
+                                    .read(selectedIndexProvider.notifier)
+                                    .select(index);
+                              },
+                            ),
+                          ),
+                          if (selectedIndex == index)
+                            Container(
+                              width: 6.0,
+                              height: 30.0,
+                              margin: const EdgeInsets.only(left: 2.0),
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.primary,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(5),
+                                  bottomLeft: Radius.circular(5),
+                                ),
+                              ),
+                            ),
+                        ],
                       );
                     },
                     error: (error, stackTrace) {
                       return const SizedBox.shrink();
                     },
                     loading: () {
-                      return const SizedBox.shrink();
+                      return const SimilarityListTileLoading();
                     },
                   );
                 },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

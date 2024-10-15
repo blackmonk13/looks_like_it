@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:looks_like_it/utils/prefs.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -8,7 +10,8 @@ part 'files.g.dart';
 class SimilaritiesExecutable extends _$SimilaritiesExecutable {
   @override
   String? build() {
-    return getExecutablePath;
+    final sharedPrefs = ref.watch(sharedPreferencesProvider).requireValue;
+    return sharedPrefs.getString(executablePathPrefsKey);
   }
 
   Future<void> pickExecutable() async {
@@ -25,6 +28,22 @@ class SimilaritiesExecutable extends _$SimilaritiesExecutable {
     if (success) {
       state = xFile.path;
     }
+  }
+
+  Future<bool> setExecutablePath(String? newPath) async {
+    final sharedPrefs = ref.read(sharedPreferencesProvider).requireValue;
+    if (newPath == null) {
+      return sharedPrefs.remove(executablePathPrefsKey);
+    }
+
+    if (newPath.isEmpty) {
+      return false;
+    }
+
+    return sharedPrefs.setString(
+      executablePathPrefsKey,
+      newPath,
+    );
   }
 }
 
@@ -49,25 +68,73 @@ class DirectoryPicker extends _$DirectoryPicker {
   }
 
   String? setFolder(String folderPath) {
+    final exists = Directory(folderPath).existsSync();
+    if (!exists) {
+      return null;
+    }
     state = folderPath;
     return state;
   }
 }
 
-
 @riverpod
 class RecentPaths extends _$RecentPaths {
   @override
   FutureOr<List<String>> build() {
-    return getRecentPaths;
+    final sharedPrefs = ref.watch(sharedPreferencesProvider).requireValue;
+    final recentPaths = sharedPrefs.getStringList(recentPathsPrefsKey);
+    return recentPaths ?? [];
   }
 
-  Future<void> add(String value) async {
+  Future<bool> add(String value) async {
     state = const AsyncLoading();
-    await setRecentPaths(value);
-
-    state = AsyncValue.data(getRecentPaths);
-
+    final status = await setRecentPaths(value);
     await future;
+    return status;
+  }
+
+  Future<bool> deleteRecentPath(String pathToDelete) async {
+    final existingPaths = await future;
+
+    // Check if the path exists in the list
+    if (!existingPaths.contains(pathToDelete)) {
+      return false;
+    }
+
+    // Remove the path from the list
+    existingPaths.remove(pathToDelete);
+
+    final sharedPrefs = ref.read(sharedPreferencesProvider).requireValue;
+
+    return sharedPrefs.setStringList(
+      recentPathsPrefsKey,
+      existingPaths,
+    );
+  }
+
+  Future<bool> setRecentPaths(String? newPath) async {
+    if (newPath == null) {
+      return false;
+    }
+
+    if (newPath.isEmpty) {
+      return false;
+    }
+
+    final existingPaths = await future;
+
+    if (existingPaths.contains(newPath)) {
+      return true;
+    }
+
+    final sharedPrefs = ref.read(sharedPreferencesProvider).requireValue;
+
+    return sharedPrefs.setStringList(
+      recentPathsPrefsKey,
+      [
+        ...existingPaths,
+        newPath,
+      ],
+    );
   }
 }

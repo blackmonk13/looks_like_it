@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:layout/layout.dart';
+import 'package:looks_like_it/components/similarity_list_tile.dart';
 import 'package:looks_like_it/utils/extensions.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -13,48 +15,42 @@ class ScanLoader extends StatelessWidget {
     final color = colorScheme.surfaceContainerHigh;
     return Row(
       children: [
+        ...context.layout.value<List<Widget>>(
+          xs: [const SizedBox.shrink()],
+          sm: context.layout.width < 800
+              ? [const SizedBox.shrink()]
+              : [
+                  Flexible(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: 10,
+                      separatorBuilder: (BuildContext context, int index) {
+                        return Divider(
+                          thickness: .5,
+                          color: context.colorScheme.outline.withOpacity(.5),
+                          indent: 60,
+                          endIndent: 60,
+                        );
+                      },
+                      itemBuilder: (BuildContext context, int index) {
+                        return const SimilarityListTileLoading();
+                      },
+                    ),
+                  ),
+                  VerticalDivider(
+                    thickness: .5,
+                    color: context.colorScheme.outline.withOpacity(.5),
+                    width: 0.5,
+                  ),
+                ],
+        ),
         Flexible(
-          child: Container(
-            color: context.colorScheme.surfaceContainer,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              itemCount: 10,
-              separatorBuilder: (BuildContext context, int index) {
-                return const Divider(
-                  thickness: 0.4,
-                );
-              },
-              itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  leading: Shimmered(
-                    width: 50,
-                    height: 50,
-                    color: color,
-                  ),
-                  title: Shimmered(
-                    width: 100,
-                    height: 14,
-                    borderRadius: 500.0,
-                    color: color,
-                  ),
-                  trailing: Shimmered(
-                    width: 14,
-                    height: 14,
-                    borderRadius: 500.0,
-                    color: color,
-                  ),
-                );
-              },
-            ),
+          flex: context.layout.value(
+            xs: 4,
+            sm: context.layout.width < 900 ? 5 : 3,
           ),
-        ),
-        const VerticalDivider(
-          width: 2.0,
-        ),
-        Flexible(
-          flex: 3,
           child: Container(
-            color: Theme.of(context).colorScheme.surfaceContainer,
+            color: context.colorScheme.surface,
             child: Row(
               children: [
                 Flexible(
@@ -62,36 +58,72 @@ class ScanLoader extends StatelessWidget {
                   child: Column(
                     children: [
                       Flexible(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Shimmered(
-                              margin: const EdgeInsets.all(8.0),
-                              color: color,
-                              width: 24,
-                              height: 24,
-                            ),
-                            const Spacer(),
-                            Shimmered(
-                              margin: const EdgeInsets.all(8.0),
-                              color: color,
-                              width: 24,
-                              height: 24,
-                            ),
-                            Shimmered(
-                              margin: const EdgeInsets.all(8.0),
-                              color: color,
-                              width: 24,
-                              height: 24,
-                            ),
-                            const Spacer(),
-                            Shimmered(
-                              margin: const EdgeInsets.all(8.0),
-                              color: color,
-                              width: 24,
-                              height: 24,
-                            ),
-                          ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 1.0,
+                            horizontal: 16.0,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              const Spacer(),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                              const Spacer(),
+                              Shimmered(
+                                margin: const EdgeInsets.all(8.0),
+                                color: color,
+                                width: 20,
+                                height: 20,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const Divider(
@@ -132,9 +164,9 @@ class ScanLoader extends StatelessWidget {
                         height: 2.0,
                       ),
                       Flexible(
-                        flex: 4,
+                        flex: 1,
                         child: Container(
-                          color: context.colorScheme.surfaceContainer,
+                          color: context.colorScheme.surface,
                           child: Row(
                             children: [
                               Flexible(
@@ -142,7 +174,7 @@ class ScanLoader extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 8.0,
                                   ),
-                                  itemCount: 2,
+                                  itemCount: 1,
                                   separatorBuilder:
                                       (BuildContext context, int index) {
                                     return const Divider();
@@ -183,7 +215,7 @@ class ScanLoader extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 8.0,
                                   ),
-                                  itemCount: 2,
+                                  itemCount: 1,
                                   separatorBuilder:
                                       (BuildContext context, int index) {
                                     return const Divider();
@@ -223,33 +255,6 @@ class ScanLoader extends StatelessWidget {
                     ],
                   ),
                 ),
-                const VerticalDivider(
-                  width: 2.0,
-                ),
-                Flexible(
-                  child: Center(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16.0,
-                        horizontal: 16.0,
-                      ),
-                      shrinkWrap: true,
-                      itemCount: 5,
-                      separatorBuilder: (BuildContext context, int index) {
-                        return const Divider();
-                      },
-                      itemBuilder: (BuildContext context, int index) {
-                        return AspectRatio(
-                          aspectRatio: 1,
-                          child: Shimmered(
-                            borderRadius: 5.0,
-                            color: context.colorScheme.surfaceContainerHigh,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                )
               ],
             ),
           ),

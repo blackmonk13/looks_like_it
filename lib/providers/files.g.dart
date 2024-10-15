@@ -7,7 +7,7 @@ part of 'files.dart';
 // **************************************************************************
 
 String _$similaritiesExecutableHash() =>
-    r'dfb77a31570c89e457edc60ef8eb9f1a80f4e413';
+    r'bf5cd95f0aaf3357097d27759dab9512a5fabf0c';
 
 /// See also [SimilaritiesExecutable].
 @ProviderFor(SimilaritiesExecutable)
@@ -23,7 +23,7 @@ final similaritiesExecutableProvider =
 );
 
 typedef _$SimilaritiesExecutable = Notifier<String?>;
-String _$directoryPickerHash() => r'b1b5c1c1e4d49c73c5f35e0a4f4725601ad02751';
+String _$directoryPickerHash() => r'8acd52bef9f849efac58a8f1ff8a0c518ec08b04';
 
 /// See also [DirectoryPicker].
 @ProviderFor(DirectoryPicker)
@@ -39,7 +39,7 @@ final directoryPickerProvider =
 );
 
 typedef _$DirectoryPicker = Notifier<String?>;
-String _$recentPathsHash() => r'4f09be434bf960e37eadae9f27dbfb82a015eb70';
+String _$recentPathsHash() => r'2eb4ca61f6ca7e7bfd9166a6549f5c2a567def8d';
 
 /// See also [RecentPaths].
 @ProviderFor(RecentPaths)

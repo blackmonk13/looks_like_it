@@ -1,13 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:looks_like_it/models/similar_image.dart';
+import 'package:isar/isar.dart';
+import 'package:looks_like_it/imagehash/image_hashing.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-
 part 'common.g.dart';
-
-
 
 @riverpod
 FileImage fileImage(FileImageRef ref, String imagePath) {
@@ -15,7 +14,6 @@ FileImage fileImage(FileImageRef ref, String imagePath) {
     File(imagePath),
   );
 }
-
 
 @riverpod
 class SelectedImageController extends _$SelectedImageController {
@@ -53,36 +51,76 @@ class SelectedSimilarity extends _$SelectedSimilarity {
   }
 }
 
+
+@Riverpod(keepAlive: true)
+FutureOr<Isar> isar(IsarRef ref) async {
+  final dir = await getApplicationSupportDirectory();
+  final isar = await Isar.open(
+    [...ImagesProcessor.schemas],
+    directory: dir.path,
+    inspector: false,
+  );
+  ref.onDispose(() => isar.close());
+  return isar;
+}
+
+@Riverpod(keepAlive: true)
+Future<void> appStartup(AppStartupRef ref) async {
+  ref.onDispose(() {
+    // ensure we invalidate all the providers we depend on
+    ref.invalidate(imagesProcessingProvider);
+    ref.invalidate(isarProvider);
+  });
+  // all asynchronous app initialization code should belong here:
+  await ref.watch(isarProvider.future);
+  await ref.watch(imagesProcessingProvider.future);
+  await ref.read(imagesProcessingProvider).requireValue.clearSimilarities();
+}
+
 @riverpod
-class SelectedImages extends _$SelectedImages {
-  @override
-  List<SimilarImage> build() {
-    return [];
-  }
-
-  void select(SimilarImage value) {
-    if (state.any((img) => img.imagePath == value.imagePath)) {
-      return;
+Stream<List<String>> listFolders(ListFoldersRef ref, String folderPath) async* {
+  final directory = Directory(folderPath);
+  final folders = <String>[];
+  await for (var entity in directory.list()) {
+    if (entity is Directory) {
+      folders.add(entity.path);
+      yield folders;
     }
-    state = [...state, value];
+  }
+}
+
+
+
+@Riverpod(keepAlive: true)
+class ScrollPosition extends _$ScrollPosition {
+  @override
+  double build(String key) {
+    return 0.0;
   }
 
-  void deselect(SimilarImage value) {
-    state = state.where((image) {
-      return image.imagePath != value.imagePath;
-    }).toList();
+  void updatePosition(double position) {
+    state = position;
+  }
+}
+
+@Riverpod(keepAlive: true)
+class SelectedIndex extends _$SelectedIndex {
+  @override
+  int build() {
+    return 0;
   }
 
-  void selectMany(List<SimilarImage> value) {
-    final items = value.where((element) {
-      return !state.contains(element);
-    });
-    state = [...state, ...items];
+  void select(int index) {
+    state = index;
   }
 
-  void deselectMany(List<SimilarImage> value) {
-    state = state.where((element) {
-      return !value.contains(element);
-    }).toList();
+  void selectNextOrPrevious(int totalCount) {
+    final currentIndex = state;
+    if (totalCount > 0) {
+      state = currentIndex < totalCount - 1 ? currentIndex : currentIndex - 1;
+    } else {
+      // FIXME:
+      state = 0;
+    }
   }
 }

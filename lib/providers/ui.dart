@@ -22,10 +22,18 @@ class ImageViewMode extends _$ImageViewMode {
 class ThemeController extends _$ThemeController {
   @override
   ThemeMode build() {
-    return themeModePref;
+    final sharedPrefs = ref.watch(sharedPreferencesProvider).requireValue;
+    final themeModeInt = sharedPrefs.getInt(themeModePrefsKey);
+
+    if (themeModeInt == null) {
+      return ThemeMode.system;
+    }
+
+    return ThemeMode.values.elementAtOrNull(themeModeInt) ?? ThemeMode.system;
   }
 
   Future<bool> setTheme(ThemeMode themeMode) async {
-    return setThemeModePref(themeMode);
+    final sharedPrefs = ref.read(sharedPreferencesProvider).requireValue;
+    return sharedPrefs.setInt(themeModePrefsKey, themeMode.index);
   }
 }

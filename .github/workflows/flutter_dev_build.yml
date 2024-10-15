@@ -34,7 +34,6 @@ jobs:
         run: flutter pub get
 
       - name: Extract version and build number
-        if: matrix.os == 'ubuntu-latest'
         id: extract_version
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
@@ -48,7 +47,6 @@ jobs:
           echo "BUILD_NUMBER=${build_number}" >> $GITHUB_ENV
       
       - name: Increment build number and update pubspec.yaml
-        if: matrix.os == 'ubuntu-latest'
         run: |
           if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
             new_build_number=$((${BUILD_NUMBER} + 1))
@@ -60,7 +58,6 @@ jobs:
           echo "NEW_BUILD_NUMBER=${new_build_number}" >> $GITHUB_ENV
 
       - name: Commit updated pubspec.yaml
-        if: matrix.os == 'ubuntu-latest'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -83,31 +80,13 @@ jobs:
           flutter build windows --release
           powershell Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "build/windows/x64/runner/windows-release.zip"
 
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3
         with:
           name: ${{ matrix.os == 'ubuntu-latest' && 'linux-release.zip' || 'windows-release.zip' }}
           path: |
-            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/x64/runner/windows-release.zip' }}
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download linux artifacts
-        uses: actions/download-artifact@v2.0.10
-        with:
-          name: linux-release.zip
-          path: build/linux/x64/release/
-
-      - name: Download windows artifacts
-        uses: actions/download-artifact@v2.0.10
-        with:
-          name: windows-release.zip
-          path: build/windows/x64/runner/
+            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/runner/x64/windows-release.zip' }}
 
       - name: Create Tag
         run: |
@@ -120,8 +99,6 @@ jobs:
         uses: softprops/action-gh-release@v2.0.5
         with:
           files: |
-            build/linux/x64/release/linux-release.zip
-            build/windows/x64/runner/windows-release.zip
+            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/windows-release.zip' }}
           tag_name: v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}-alpha
           make_latest: false
-

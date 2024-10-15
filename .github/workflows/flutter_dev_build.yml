@@ -87,13 +87,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download artifacts
+      - name: Download linux artifacts
         uses: actions/download-artifact@v2.0.10
         with:
           name: linux-release.zip
           path: build/linux/x64/release/
 
-      - name: Download artifacts
+      - name: Download windows artifacts
         uses: actions/download-artifact@v2.0.10
         with:
           name: windows-release.zip

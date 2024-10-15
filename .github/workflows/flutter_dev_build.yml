@@ -33,6 +33,8 @@ jobs:
           version_line=$(grep 'version:' pubspec.yaml)
           version=$(echo $version_line | sed 's/version: //' | cut -d "+" -f 1)
           build_number=$(echo $version_line | sed 's/version: //' | cut -d "+" -f 2)
+          echo "VERSION=${version}" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=${build_number}" >> $GITHUB_ENV
           echo "version=${version}" >> $GITHUB_OUTPUT
           echo "build_number=${build_number}" >> $GITHUB_OUTPUT
           echo "Current version: ${version}+${build_number}"
@@ -40,11 +42,12 @@ jobs:
       - name: Increment build number and update pubspec.yaml
         id: increment_build
         run: |
-          echo "Current version: ${version}+${build_number}"
-          new_build_number=$((${build_number} + 1))
-          sed -i "s/version: ${version}+${build_number}/version: ${version}+${new_build_number}/" pubspec.yaml
+          echo "Current version: ${{ env.VERSION }}+${{ env.BUILD_NUMBER }}"
+          new_build_number=$((BUILD_NUMBER + 1))
+          sed -i "s/version: ${VERSION}+${BUILD_NUMBER}/version: ${VERSION}+${new_build_number}/" pubspec.yaml
+          echo "NEW_BUILD_NUMBER=${new_build_number}" >> $GITHUB_ENV
           echo "new_build_number=${new_build_number}" >> $GITHUB_OUTPUT
-          echo "Updated version: ${version}+${new_build_number}"
+          echo "Updated version: ${VERSION}+${new_build_number}"
           echo "pubspec.yaml content after update:"
           cat pubspec.yaml
 
@@ -66,7 +69,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git add pubspec.yaml
           if [[ "${{ steps.check_changes.outputs.changes_detected }}" == "true" ]]; then
-            git commit -m "Increment build number to ${{ steps.increment_build.outputs.new_build_number }}"
+            git commit -m "Increment build number to ${{ env.NEW_BUILD_NUMBER }}"
             git push
             echo "changes_made=true" >> $GITHUB_OUTPUT
             echo "Changes committed and pushed"

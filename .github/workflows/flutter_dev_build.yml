@@ -34,30 +34,23 @@ jobs:
         run: flutter pub get
 
       - name: Extract version and build number
+        if: matrix.os == 'ubuntu-latest'
         id: extract_version
         run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
-            build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
-          else
-            version=$(Get-Content pubspec.yaml | Select-String -Pattern '^version:' | ForEach-Object { $_.Line -replace 'version: ', '' } | ForEach-Object { $_.Split('+')[0] })
-            build_number=$(Get-Content pubspec.yaml | Select-String -Pattern '^version:' | ForEach-Object { $_.Line -replace 'version: ', '' } | ForEach-Object { $_.Split('+')[1] })
-          fi
+          version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
+          build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
           echo "VERSION=${version}" >> $GITHUB_ENV
           echo "BUILD_NUMBER=${build_number}" >> $GITHUB_ENV
-      
+
       - name: Increment build number and update pubspec.yaml
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            new_build_number=$((${BUILD_NUMBER} + 1))
-            sed -i "s/version: ${VERSION}+${BUILD_NUMBER}/version: ${VERSION}+${new_build_number}/" pubspec.yaml
-          else
-            new_build_number=$($env:BUILD_NUMBER + 1)
-            (Get-Content pubspec.yaml) -replace "version: ${env:VERSION}+${env:BUILD_NUMBER}", "version: ${env:VERSION}+${new_build_number}" | Set-Content pubspec.yaml
-          fi
+          new_build_number=$((${BUILD_NUMBER} + 1))
+          sed -i "s/version: ${VERSION}+${BUILD_NUMBER}/version: ${VERSION}+${new_build_number}/" pubspec.yaml
           echo "NEW_BUILD_NUMBER=${new_build_number}" >> $GITHUB_ENV
 
       - name: Commit updated pubspec.yaml
+        if: matrix.os == 'ubuntu-latest'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -85,6 +78,25 @@ jobs:
           path: |
             ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/runner/x64/windows-release.zip' }}
 
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2.0.10
+        with:
+          name: linux-release.zip
+          path: build/linux/x64/release/
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2.0.10
+        with:
+          name: windows-release.zip
+          path: build/windows/runner/x64/
+
       - name: Create Tag
         run: |
           git config --local user.email "action@github.com"
@@ -96,6 +108,8 @@ jobs:
         uses: softprops/action-gh-release@v2.0.5
         with:
           files: |
-            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/windows-release.zip' }}
+            build/linux/x64/release/linux-release.zip
+            build/windows/runner/x64/windows-release.zip
           tag_name: v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}-alpha
           make_latest: false
+

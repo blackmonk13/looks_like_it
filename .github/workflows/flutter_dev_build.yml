@@ -30,8 +30,9 @@ jobs:
       - name: Extract version and build number
         id: extract_version
         run: |
-          version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
-          build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
+          version_line=$(grep 'version:' pubspec.yaml)
+          version=$(echo $version_line | sed 's/version: //' | cut -d "+" -f 1)
+          build_number=$(echo $version_line | sed 's/version: //' | cut -d "+" -f 2)
           echo "version=${version}" >> $GITHUB_OUTPUT
           echo "build_number=${build_number}" >> $GITHUB_OUTPUT
           echo "Current version: ${version}+${build_number}"

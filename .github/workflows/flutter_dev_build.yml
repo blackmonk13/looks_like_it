@@ -35,26 +35,18 @@ jobs:
 
       - name: Extract version and build number
         id: extract_version
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
-            build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
-          else
-            version=$(Get-Content pubspec.yaml | Select-String -Pattern '^version:' | ForEach-Object { $_.Line -replace 'version: ', '' } | ForEach-Object { $_.Split('+')[0] })
-            build_number=$(Get-Content pubspec.yaml | Select-String -Pattern '^version:' | ForEach-Object { $_.Line -replace 'version: ', '' } | ForEach-Object { $_.Split('+')[1] })
-          fi
+          version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
+          build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
           echo "VERSION=${version}" >> $GITHUB_ENV
           echo "BUILD_NUMBER=${build_number}" >> $GITHUB_ENV
       
       - name: Increment build number and update pubspec.yaml
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
-            new_build_number=$((${BUILD_NUMBER} + 1))
-            sed -i "s/version: ${VERSION}+${BUILD_NUMBER}/version: ${VERSION}+${new_build_number}/" pubspec.yaml
-          else
-            new_build_number=$($env:BUILD_NUMBER + 1)
-            (Get-Content pubspec.yaml) -replace "version: ${env:VERSION}+${env:BUILD_NUMBER}", "version: ${env:VERSION}+${new_build_number}" | Set-Content pubspec.yaml
-          fi
+          new_build_number=$((${BUILD_NUMBER} + 1))
+          sed -i "s/version: ${VERSION}+${BUILD_NUMBER}/version: ${VERSION}+${new_build_number}/" pubspec.yaml
           echo "NEW_BUILD_NUMBER=${new_build_number}" >> $GITHUB_ENV
 
       - name: Commit updated pubspec.yaml

@@ -21,6 +21,7 @@ jobs:
       version: ${{ steps.extract_version.outputs.version }}
       build_number: ${{ steps.extract_version.outputs.build_number }}
       new_build_number: ${{ steps.increment_build.outputs.new_build_number }}
+      changes_made: ${{ steps.commit_changes.outputs.changes_made }}
     steps:
       - uses: actions/checkout@v4
 
@@ -40,11 +41,18 @@ jobs:
           echo "new_build_number=${new_build_number}" >> $GITHUB_OUTPUT
 
       - name: Commit updated pubspec.yaml
+        id: commit_changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git commit -am "Increment build number to ${{ steps.increment_build.outputs.new_build_number }}"
-          git push
+          git add pubspec.yaml
+          git diff --staged --quiet || (git commit -m "Increment build number to ${{ steps.increment_build.outputs.new_build_number }}" && echo "changes_made=true" >> $GITHUB_OUTPUT)
+          changes_made=${{ steps.commit_changes.outputs.changes_made }}
+          if [ "$changes_made" = "true" ]; then
+            git push
+          else
+            echo "No changes to commit"
+          fi
 
   build:
     needs: prepare
@@ -90,6 +98,7 @@ jobs:
 
   release:
     needs: [prepare, build]
+    if: needs.prepare.outputs.changes_made == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

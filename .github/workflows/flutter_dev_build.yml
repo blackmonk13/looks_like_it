@@ -15,15 +15,47 @@ permissions:
   contents: write
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract_version.outputs.version }}
+      build_number: ${{ steps.extract_version.outputs.build_number }}
+      new_build_number: ${{ steps.increment_build.outputs.new_build_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version and build number
+        id: extract_version
+        run: |
+          version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
+          build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "build_number=${build_number}" >> $GITHUB_OUTPUT
+      
+      - name: Increment build number and update pubspec.yaml
+        id: increment_build
+        run: |
+          new_build_number=$((${build_number} + 1))
+          sed -i "s/version: ${version}+${build_number}/version: ${version}+${new_build_number}/" pubspec.yaml
+          echo "new_build_number=${new_build_number}" >> $GITHUB_OUTPUT
+
+      - name: Commit updated pubspec.yaml
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "Increment build number to ${{ steps.increment_build.outputs.new_build_number }}"
+          git push
+
   build:
+    needs: prepare
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - name: Flutter action
         uses: subosito/flutter-action@v2.14.0
@@ -33,29 +65,6 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
 
-      - name: Extract version and build number
-        id: extract_version
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          version=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 1)
-          build_number=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d "+" -f 2)
-          echo "VERSION=${version}" >> $GITHUB_ENV
-          echo "BUILD_NUMBER=${build_number}" >> $GITHUB_ENV
-      
-      - name: Increment build number and update pubspec.yaml
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          new_build_number=$((${BUILD_NUMBER} + 1))
-          sed -i "s/version: ${VERSION}+${BUILD_NUMBER}/version: ${VERSION}+${new_build_number}/" pubspec.yaml
-          echo "NEW_BUILD_NUMBER=${new_build_number}" >> $GITHUB_ENV
-
-      - name: Commit updated pubspec.yaml
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -am "Increment build number to ${NEW_BUILD_NUMBER}"
-          git push
-
       - name: Build Linux
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -64,7 +73,7 @@ jobs:
           flutter build linux --release
           cd build/linux/x64/release/bundle
           zip -r ../linux-release.zip ./*
-          cd
+          cd -
 
       - name: Build Windows
         if: matrix.os == 'windows-latest'
@@ -72,25 +81,34 @@ jobs:
           flutter build windows --release
           powershell Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "build/windows/x64/runner/windows-release.zip"
 
-
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4.3.3
         with:
           name: ${{ matrix.os == 'ubuntu-latest' && 'linux-release.zip' || 'windows-release.zip' }}
           path: |
-            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/runner/x64/windows-release.zip' }}
+            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/x64/runner/windows-release.zip' }}
+
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4
 
       - name: Create Tag
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git tag -a v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}-alpha -m "Release v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}-alpha"
-          git push origin v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}-alpha
+          git tag -a v${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.new_build_number }}-alpha -m "Release v${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.new_build_number }}-alpha"
+          git push origin v${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.new_build_number }}-alpha
 
       - name: GH Release
         uses: softprops/action-gh-release@v2.0.5
         with:
           files: |
-            ${{ matrix.os == 'ubuntu-latest' && 'build/linux/x64/release/linux-release.zip' || 'build/windows/windows-release.zip' }}
-          tag_name: v${{ env.VERSION }}+${{ env.NEW_BUILD_NUMBER }}-alpha
+            linux-release.zip
+            windows-release.zip
+          tag_name: v${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.new_build_number }}-alpha
           make_latest: false

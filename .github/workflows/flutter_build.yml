@@ -150,4 +150,4 @@ jobs:
             linux-release.zip
             windows-release.zip
           tag_name: v${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.new_build_number }}
-          make_latest: false
+          make_latest: true
